@@ -3,10 +3,13 @@
 
 % summary
 In this section, I will present one by one the main aspects of my contribution to the Miniboxing plugin done during my semester project under the supervision of Vlad.
-
 % (Initial benchmark => array access slowdown.)
 % MbVector Benchmark
-\textbf{Breaking the invariant.} In the optic of experimenting with the miniboxing transformation and particularly with |MbArray|s in real world scenarios, I developped a simple implementation of a generic mutable |ArrayBuffer|. Furthermore, the project was divided in two versions, one which uses |MbArray| as its underlying storage, and another one wich uses raw Scala |Array| with |ClassTag|s, so that we could easily observe the benefits brought by |MbArray|s. 
+\subsection{Challenging the assumptions.} 
+
+In the optic of experimenting with the miniboxing transformation in real world scenarios, and particularly with |MbArray|s, I developped a straightforward implementation of a generic mutable |ArrayBuffer|. Furthermore, the project was divided in two equivalent versions, one which uses |MbArray|s as its underlying storage, and the other which uses raw Scala |Array|s with |ClassTag|s. Having these two versions not only allowed me to easily observe the benefits brought by |MbArray|s in terms of usability, but also made me able to benchmark the performance improvements that |MbArray|s ought to expose.
+
+Instead, running a simple benchmark over the |map| operations provoked a disappointing result: |MbArray|s were approximately $1.5x$ slower than their |Array| equivalent.
 
 %   => Mapping a 3M elements MbVector was slow when using MbArrays because an MbArray[int] takes up to 2 times the memory that is actually necessary to store its integers, therefore triggering additional GC cycles which do no occur when using the Array of ClassTag version.
 
