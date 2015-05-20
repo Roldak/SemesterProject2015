@@ -1,0 +1,12 @@
+\section{Contributions}
+\label{sec:contrib}
+
+% summary
+In this section, I will present one by one the items that sum up best my contribution during my semester project with Vlad to the Miniboxing plugin.
+
+% (Initial benchmark => array access slowdown.)
+% MbVector Benchmark
+%   => Mapping a 3M elements MbVector was slow when using MbArrays because an MbArray[int] takes up to 2 times the memory that is actually necessary to store its integers, therefore triggering additional GC cycles which do no occur when using the Array of ClassTag version.
+
+% How to solve this problem ?
+% One of the underlying assumptions of MbArrays is that an MbArray of an integral type uses an Array[Long] internally to store its data. As said above, the general transformation applied by the Miniboxing plugin will specialize the miniboxed code for 3 cases: Object references, Integral values (boxed into longs), Floating point values (boxed into doubles). Therefore, MbArrays would not need to have more than 3 different specializations: MbArray_L, MbArray_J, MbArray_D. 
