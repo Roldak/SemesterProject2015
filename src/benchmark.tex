@@ -3,7 +3,7 @@
 
 In high-level languages, arrays are rarely used explicitly in algorithms and data structures, as they are usually provided with a limited API which only offers basic operations such as element retrieval and update. Instead, arrays are often used as the underlying storage of more high-level collections, such as |ArrayBuffer|s and |Vector|s.
 
-In the optic of measuring performance improvements brought by |MbArray|s combined with the miniboxing transformation in realistic scenarios, I implemented one of these collections: the |ArrayBuffer|. To be able to compute the improvement, a version using the |ClassTag| approach mentionned earlier in the paper is implemented in an identical manner. Hence, on top of the |@miniboxed| annotation, the only differences in the source code between the two versions appear where arrays are instantiated and where array types are referenced. 
+In the optic of measuring performance improvements brought by |MbArray|s combined with the miniboxing transformation in realistic scenarios, I implemented one of these collections: the |ArrayBuffer|. To be able to compute the improvement, a version using the |ClassTag| approach mentionned earlier in the paper is implemented in an identical manner. Hence, on top of the |@miniboxed| annotations and |ClassTag| bounds, the only differences in the source code between the two versions appear where arrays are instantiated and where array types are referenced. 
 
 \subsection{High-level Overview}
 
@@ -12,34 +12,84 @@ Quoting the official Scala documentation, an |ArrayBuffer| is:
 \textit{An implementation of the Buffer class using an array to represent the assembled sequence internally. Append, update and random access take constant time (amortized time). Prepends and removes are linear in the buffer size.} 
 \end{quote}
 
-On top of this, high-level features are provided with the implementation, such as |map| or |filter|. These methods are regularly used because they allow programmers to enhance their productivity significantly. For these reasons, these methods were the actual subjects of the benchmarks.
+On top of this, high-level features are provided with the implementation, such as |foreach|, |map| or |filter|. These methods are regularly used because they allow programmers to enhance significantly their productivity. For this reason, these methods became the actual subjects of the benchmarks.
 
 \subsection{ArrayBuffer implementation}
 
-One of the properties of the |ArrayBuffer| is that it is dynamically resizable, which means it is possible to append elements to it even after it has been instantiated for a given size. For example: 
+In this subsection, I explain how the main features of the\linebreak |ArrayBuffer| are implemented. Note that code snippets are taken from the miniboxed version.
+
+\textbf{Dynamic size}. One of the properties of the |ArrayBuffer| is that it is dynamically resizable, which means it is possible to append elements to it even after it has been instantiated for a given size. For example: 
 
 \begin{lstlisting-nobreak}
- val buf = new ArrayBuffer[int](2)
- buf(0) = 1
- buf(1) = 2
- buf.append(3) // buf now contains {1, 2, 3}
+val buf = new ArrayBuffer[Int](2)
+buf(0) = 1
+buf(1) = 2
+buf.append(3) // buf now contains {1, 2, 3}
 \end{lstlisting-nobreak}
 
-However, this feature is not proposed by default by the underlying array (neither |Array| nor |MbArray| implements it). One way to implement this feature is to naively instantiate a new array of size $n + 1$ each time an element is appended, where $n$ is the current size of the array, and to then copy the previous content to the new one.
-While it is simple to implement, it has major performance issues in case several append operations are done sequentially to a decently large array.
-% example ?
+However, this feature is not proposed by default by the underlying array -- neither |Array| nor |MbArray| implements it. One way to implement this feature is to naively re-instantiate the underlying array with a size $n + 1$ each time an element is appended, where $n$ is the previous size of the array, and to then copy the content of the old array to the new one.
+While it is simple to implement, it has major performance issues in case several |append| calls are done sequentially to a decently large |ArrayBuffer|.
+% example maybe ?
 
+Instead, the growth strategy commonly employed is to allocate an array of two times the size of the previous one, which ultimately produces less garbage while reducing considerably the number of full array copies that need to be done. To this end, the |ArrayBuffer| needs to keep track of the real number of elements that it contains, because it does not correspond to the size of the underlying array anymore. 
  
-Here, I will present how the different features are implemented:
-\begin{itemize}
-  \item |append|: when an item is appended to the |ArrayBuffer|, I use a classical growth policy, where 
-  \item |apply|: 
-  \item |update|: 
-  \item |map|: 
-  \item |filter|: 
-\end{itemize}
+\textbf{Iterable}. Iterating over the entire collection is an operation that is recurrent in algorithms. These algorithms often want to make abstraction of the collection type that is used and only want to express their need to traverse it. |Iterable| is a common interface which can be implemented by every collection that support complete traversal. It requires its implementations to provide access to an |Iterator|, which will itself be used to iterate through the collection. This was implemented in a standard way:
+
+\begin{lstlisting-nobreak}
+trait Iterable[@miniboxed T] {
+  def iterator: Iterator[T]
+
+  def foreach(f: (T) => Unit) = {
+    val it = iterator
+    while (it.hasNext) {
+      f(it.next)
+    }
+  }
+}
+
+trait Iterator[@miniboxed T] {
+  def next: T
+  def hasNext: Boolean
+}
+\end{lstlisting-nobreak}
+
+\textbf{Buildable}. Occasionnally, algorithms also want to express their need to build a new collection based on an existing one. In the Scala Standard Library, this feature is exposed through the |CanBuildFrom| mechanism. The advantage of this method is that it can build a collection that is adapted to the context: mapping a |BitSet| over a function returning |Float|s will produce a |Set| and not a |BitSet| -- which is exactly what we want -- because the Scala compiler will not find any way to construct a |BitSet| with |Float| values. Here, I decided to simplify (but not too much) the design by proposing an interface which only allows building the same type of collection. That is, a |Collection[T]| can only build |Collection[U]|. Thanks to Scala's ability to abstract over type constructor, the interface could be implemented in a straightforward manner: 
+
+\begin{lstlisting-nobreak}
+trait Buildable[@miniboxed T, Container[_]] extends Iterable[T] {
+  def builder[@miniboxed U]: Builder[U, Container]
+
+  def map[@miniboxed U](f: T => U) = {
+    val bd = builder[U]
+    val it = iterator
+    while (it.hasNext) bd.append(f(it.next))
+    bd.finalise
+  }
+
+  def filter(f: T => Boolean) = {
+    val bd = builder[T]
+    val it = iterator
+    while (it.hasNext) {
+      val elem = it.next
+      if (f(elem)) {
+        bd.append(elem)
+      }
+    }
+    bd.finalise
+  }
+}
+
+trait Builder[@miniboxed T, Container[_]] {
+  def append(x: T): Unit
+  def finalise: Container[T]
+}
+\end{lstlisting-nobreak}
+
+Even though the simplification lost us a bit of flexibility, the abstraction over the collection is still present, thus avoiding us the cost of having to reimplemented map and filter for each of our collections.
 
 \subsection{Benchmarking procedure}
+
+In order to benchmark
 
 \subsection{The Numbers}
 

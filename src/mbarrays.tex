@@ -235,7 +235,7 @@ Therefore, while specialization does reduce the overhead of acessing primitive a
 \vspace{-1em}
 
 % a natural question: can we combine the three approaches before to get something working?
-\textbf{Miniboxed arrays.} Would it be possible to combine the three approaches seen so far to produce an alternative Array which does not have any of the disadvantages? In this subsection we present how |MbArray| achieves this, keeping the main advantages of each approach and dropping their disadvantages.
+\textbf{Miniboxed arrays.} Would it be possible to combine the three approaches seen so far to produce an alternative |Array| which does not have any of the disadvantages? In this subsection we present how |MbArray| achieves this, keeping the main advantages of each approach and dropping their disadvantages.
 
 % enter MbArray:
 %  - invariant approach      => advantage:    solves array instantiation problem
@@ -255,7 +255,7 @@ Therefore, while specialization does reduce the overhead of acessing primitive a
 
 |MbArray| is a generic class that wraps a Scala |Array| but is also able to guarantee it does not escape, thus being similar to the ``Breaking the invariant'' approach. This allows programmers to instantiate |MbArray| objects without the need for a |ClassTag| object. It may seem this path will lead to boxing values in the array, but this is not the case: thanks to the tight integration with miniboxing, the |MbArray| class can reflectively decide what array to instantiate: either an array of objects or an array of long integers (the storage type). Therefore, the underlying array does not box the elements.
 
-Finally, capitalizing on the tight integration with miniboxing, the array access procedures are transformed to optimistically access the underlying array directly, obtaining the miniboxed value right away. This is an opportunistic approach: there is a fast-path, when the storage type of the miniboxed class and the |MbArray| object coincide, or a slow path, when they don't. But, thanks to the guidance from the performance advisories, in the latter case only occurs with the programmer's consent, who knowingly allows the program to take the slow path.
+Finally, capitalizing on the tight integration with miniboxing, the array access procedures are transformed to optimistically access the underlying array directly, obtaining the miniboxed value right away. This is an opportunistic approach: there is a fast-path, when the storage type of the miniboxed class and the |MbArray| object coincide, or a slow path, when they don't. But, thanks to the guidance from the performance advisories, the latter case only occurs with the programmer's consent, who knowingly allows the program to take the slow path.
 
 With this approach, the following code:
 
@@ -290,6 +290,4 @@ To conclude, the opportunistic nature of the |MbArray| coupled with performance 
   \item Stores miniboxed values, which are more efficient than boxing;
   \item Accesses elements efficiently (if advisories are heeded).
 \end{compactitem}
-
-The next section presents a set of benchmarks that show how these transformations impact performance.
 
