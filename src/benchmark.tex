@@ -16,7 +16,28 @@ On top of this, high-level features are provided with the implementation, such a
 
 \subsection{ArrayBuffer implementation}
 
+One of the properties of the |ArrayBuffer| is that it is dynamically resizable, which means it is possible to append elements to it even after it has been instantiated for a given size. For example: 
 
+\begin{lstlisting-nobreak}
+ val buf = new ArrayBuffer[int](2)
+ buf(0) = 1
+ buf(1) = 2
+ buf.append(3) // buf now contains {1, 2, 3}
+\end{lstlisting-nobreak}
+
+However, this feature is not proposed by default by the underlying array (neither |Array| nor |MbArray| implements it). One way to implement this feature is to naively instantiate a new array of size $n + 1$ each time an element is appended, where $n$ is the current size of the array, and to then copy the previous content to the new one.
+While it is simple to implement, it has major performance issues in case several append operations are done sequentially to a decently large array.
+% example ?
+
+ 
+Here, I will present how the different features are implemented:
+\begin{itemize}
+  \item |append|: when an item is appended to the |ArrayBuffer|, I use a classical growth policy, where 
+  \item |apply|: 
+  \item |update|: 
+  \item |map|: 
+  \item |filter|: 
+\end{itemize}
 
 \subsection{Benchmarking procedure}
 
