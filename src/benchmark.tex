@@ -138,6 +138,19 @@ In this section, I describe the steps that I followed in order to solve the slow
 
 \subsection{Interpretation of the Numbers}
 
-First of all, I tried to tweak the parameters of the benchmark to try deducing the cause of the slowdowns. As one could expect, modifying basic items such as the size of the |ArrayBuffer|s did not improve the numbers. Ultimately, I had to dig deeper into what could cause the problem. One of the cause could be that the code is not getting inlined, so I ran the benchmark with the |-XX:+PrintCompilation| JVM flag. Still, everything was as expected. On the other hand, running the benchmark once more with the |gc:verbose| option yielded a more interesting result: the version using |MbArray|s would trigger one more GC cycle after each iteration.
+First of all, I tried to tweak the parameters of the benchmark to try deducing the cause of the slowdowns. As one could expect, modifying basic items such as the size of the |ArrayBuffer|s did not improve the numbers. Ultimately, I had to dig deeper into what could cause the problem. One of the cause could be that the code is not getting inlined, so I ran the benchmark with the |-XX:+PrintCompilation| JVM flag. Still, everything was as expected. On the other hand, running the benchmark once more with the |gc:verbose| option yielded a more interesting result: the version using |MbArray|s would trigger one more GC cycle after each iteration:
+
+\begin{figure}
+	\centering
+	\subfigure[ClassTag version]{
+		\lstinputlisting{BenchmarkOutputs/CtVector1.txt}	
+		\label{fig:CtVector1}
+	}
+	\subfigure[Miniboxed version]{
+		\lstinputlisting{BenchmarkOutputs/MbVector1.txt}
+	    \label{fig:MbVector1}
+	}
+	\caption{Benchmark outputs for the two versions}\label{fig:BenchOuts}
+\end{figure}
 
 %In the optic of experimenting real world scenarios with the miniboxing transformation
