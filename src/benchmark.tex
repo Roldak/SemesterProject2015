@@ -62,7 +62,9 @@ trait Buildable[@miniboxed T, Container[_]] extends Iterable[T] {
   def map[@miniboxed U](f: T => U) = {
     val bd = builder[U]
     val it = iterator
-    while (it.hasNext) bd.append(f(it.next))
+    while (it.hasNext) {
+      bd.append(f(it.next))
+    }
     bd.finalise
   }
 
@@ -89,8 +91,53 @@ Even though the simplification lost us a bit of flexibility, the abstraction ove
 
 \subsection{Benchmarking procedure}
 
-In order to benchmark
+In order to benchmark run time performance of |MbArray|s, I created two projects -- one for each |ArrayBuffer| version -- which use the Scalameter library. The original benchmark implementation is the following:
+
+\begin{lstlisting-nobreak}
+import org.scalameter.api._
+
+import arraybuffer._
+
+object ArrayBufferBenchmark extends PerformanceTest.Quickbenchmark {
+  val sizes = Gen.range("size")(300000, 1500000, 300000)
+  
+  override def executor = new org.scalameter.execution.LocalExecutor(
+    Warmer.Default(),
+    Aggregator.average,
+    measurer)
+    
+  val bufs = for {
+    size <- sizes
+  } yield new ArrayBuffer[Int](size)
+
+  performance of "ArrayBuffer" in {
+    measure method "map" in {
+      using(bufs) setUp {
+        b =>
+          b.map(_ + 1)
+          b.map(_ + 2)
+      } in {
+        b => b.map(_ + 1)
+      }
+    }
+  }
+}
+\end{lstlisting-nobreak}
+
+Here, we choose to measure the average instead of minimum which is what is done by default. The reason is the difference between two measures can be fairly big because of how GC performs at non predictable times. 
 
 \subsection{The Numbers}
+
+Unfortunately, the numbers don't look as good as we could have expected:
+
+THE NUMBERS HERE 
+
+\section{Challenging the Assumptions}
+
+In this section, I describe the steps that I followed in order to solve the slowdown observred in the last section.
+
+\subsection{Interpretation of the Numbers}
+
+First of all, I tried to tweak the parameters of the benchmark to try deducing the cause of the slowdowns. As one could expect, modifying basic items such as the size of the |ArrayBuffer|s did not improve the numbers. Ultimately, I had to dig deeper into what could cause the problem. One of the cause could be that the code is not getting inlined, so I ran the benchmark with the |-XX:+PrintCompilation| JVM flag. Still, everything was as expected. On the other hand, running the benchmark once more with the |gc:verbose| option yielded a more interesting result: the version using |MbArray|s would trigger one more GC cycle after each iteration.
 
 %In the optic of experimenting real world scenarios with the miniboxing transformation
