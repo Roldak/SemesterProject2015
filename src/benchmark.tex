@@ -143,40 +143,5 @@ Surprisingly, the |MbArray| version showed to be approximately $12\%$ than the |
 \label{fig:InitCTvsMB}
 \end{figure} 
 
-\section{Challenging the Assumptions}
-
-In this section, I describe the steps that I followed in order to debug the slowdown observed in the last section.
-
-\subsection{Interpretation of the Numbers}
-
-First of all, I tried to tweak the parameters of the benchmark to try deducing the cause of the slowdowns. As one could expect, modifying basic items such as the size of the |ArrayBuffer|s did not improve the numbers. Ultimately, I had to dig deeper into what could cause the problem, and to this end rewrote the benchmarking process by hand so that it would be easier to debug and to experiment with the JVM flags. Thinking back about the original problem, one of the cause for the slowdown could have been that hot methods would not get inlined properly for some reasons. Unfortunately, running the benchmark with the |-XX:+PrintCompilation| JVM flag did not confirm the hypothesis. On the other hand, running the benchmark once more with the |-XX:+PrintGC| option yielded a more interesting result: the version using |MbArray|s would spend way more time collecting garbage than the version using |ClassTag|s:
-
-\begin{figure}
-\centering
-\subfigure[ClassTag version]{
-	\lstinputlisting{BenchmarkOutputs/CtVector1.txt}
-	\newline
-	\label{fig:CtVector1}
-}
-\subfigure[Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/MbVector1.txt}
-	\newline
-    \label{fig:MbVector1}
-}
-\caption{Benchmark outputs for ArrayBuffers of 10'000'000 elements}\label{fig:BenchOuts}
-\label{fig:GcComp}
-\end{figure}
-
-In figure \ref{fig:GcComp}, we can see that during one iteration of the benchmark:
-\begin{enumerate}
-  \item The |ClassTag| version spends only $\approx 66ms$ collecting garbage.
-  \item The |MbArray| version spends up to $\approx 145ms$ collecting garbage. 
-\end{enumerate} 
-
-\subsection{Back-of-the-Enveloppe Calculation}
-
-Now what remains to be done before being able to fix the issue is to explain how the difference in GC time could be so important.
-The first things that stands out is how memory consumption for the |MbArray| version gets up to $800MB$, whereas the |ClassTag| version only reaches $600MB$.
-
 
 %In the optic of experimenting real world scenarios with the miniboxing transformation
