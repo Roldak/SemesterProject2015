@@ -84,7 +84,7 @@ public static <T> long mbArray_apply_J(MbArray<T> mbArray, int index, byte T_Tag
 
 \subsection{Re-benchmarking}
 
-It is now time to compare the old numbers to the numbers we obtain by running the same benchmark with the new |MbArray|. Figure \ref{fig:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends |~|3 times less time collecting garbage than the old version, from which follows a |~100ms| runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of |~70ms| for other reasons. 
+It is now time to compare the old numbers to the numbers we obtain by running the same benchmark with the new |MbArray|. Figure \ref{fig:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends |~|3 times less time collecting garbage than the old version, from which follows a |~100ms| runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of |~70ms| for other reasons. In average, the new version is $25\%$ faster than the old version in this benchmark.
 
 \begin{figure}
 \subfigure[ClassTag version]{
@@ -120,7 +120,7 @@ It is now time to compare the old numbers to the numbers we obtain by running th
 \label{fig:NewGcComp}
 \end{figure}
 
-In this initial benchmark the |MbArray| version did not prove to be faster than the |ClassTag| version. However, most of the benchmark do show better numbers for the |MbArray|. For example, benchmark \ref{fig:OtherCTvsMB} shows that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s, and figure \ref{fig:OtherGcComp} shows how the version using new |MbArray|s spends $650\%$ less time collecting garbage. Note that the only difference in the source code of this benchmark compared to the initial one is that instead of:
+In the initial benchmark, the |MbArray| version did not show to be faster than the |ClassTag| version. However, most of the benchmark do show better numbers for the |MbArray|. For example, benchmark \ref{fig:OtherCTvsMB} shows that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s, and figure \ref{fig:OtherGcComp} shows how the version using new |MbArray|s spends $650\%$ less time collecting garbage. Note that the only difference in the source code of this benchmark compared to the initial one is that instead of:
 
 \begin{lstlisting-nobreak}
   using(vectors) setUp {
