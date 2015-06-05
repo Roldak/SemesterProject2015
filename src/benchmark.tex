@@ -1,9 +1,41 @@
 \section{Benchmarking MbArrays}
 \label{sec:bench}
 
-In high-level languages, arrays are rarely used explicitly in algorithms and data structures, as they are usually provided with a limited API which only offers basic operations such as element retrieval and update. Instead, as it has already been stated in the last section, arrays are more often used as the underlying storage of more high-level collections, such as |ArrayBuffer|s and |Vector|s.
+In high-level languages, arrays are rarely used explicitly in algorithms, as they are usually provided with a limited API which only offers basic operations such as element retrieval and update. Instead, as it has already been stated in the last section, arrays are more often used as the underlying storage of more high-level collections, such as |ArrayBuffer|s and |Vector|s.
 
-In the optic of measuring performance improvements brought by |MbArray|s combined with the miniboxing transformation in realistic scenarios, I implemented one of these collections: the |ArrayBuffer|. To be able to compute the improvement, a version using the |ClassTag| approach mentionned earlier in the paper is implemented in an identical manner. Hence, on top of the |@miniboxed| annotations and |ClassTag| bounds, the only differences in the source code between the two versions appear where arrays are instantiated and where array types are referenced. 
+In order to measure performance improvements brought by |MbArray|s combined with the miniboxing transformation in realistic scenarios, I implemented the |ArrayBuffer| collection. It was implemented in two ways: using the common |Array|s with |ClassTag|s, and using |MbArray|s with miniboxing.
+%To be able to compute the improvement, a version using the |ClassTag| approach mentionned earlier in the paper is implemented in an identical manner. 
+Hence, the only differences \emph{in the source code} between the two versions appear:
+
+In the class declaration: %|@miniboxed| annotations and |ClassTag| bounds,
+  
+\begin{lstlisting-nobreak}
+// The MbArray version
+
+import MbArray._
+class ArrayBuffer[@miniboxed T](var _size: Int) 
+	extends ...
+
+// The ClassTag version
+
+import scala.reflect._
+class ArrayBuffer[T: ClassTag](var _size: Int)   
+	extends ...
+\end{lstlisting-nobreak}
+
+And where arrays are instantiated:
+
+\begin{lstlisting-nobreak}
+// The MbArray version
+	...
+	_array = MbArray.empty[T](_capacity)
+	...
+
+// The ClassTag version
+	...
+	_array = new Array[T](_capacity)
+	...
+\end{lstlisting-nobreak}
 
 \subsection{High-level Overview}
 
@@ -31,7 +63,25 @@ However, this feature is not proposed by default by the underlying array -- neit
 While it is simple to implement, it has major performance issues in case several |append| calls are done sequentially to a decently large |ArrayBuffer|.
 % example maybe ?
 
-Instead, the growth strategy commonly employed is to allocate an array of two times the size of the previous one, which ultimately produces less garbage while reducing considerably the number of full array copies that need to be done. To this end, the |ArrayBuffer| needs to keep track of the real number of elements that it contains, because it does not correspond to the size of the underlying array anymore. 
+Instead, the growth strategy commonly employed is to allocate an array of two times the size of the previous one, which ultimately produces less garbage while reducing considerably the number of full array copies that need to be done. Here is how the |append| method was implemented:
+
+\begin{lstlisting-nobreak}
+def append(elem: T) = {
+  if (_size >= _capacity) {
+    val old = _array
+    _capacity *= 2
+    _array = MbArray.empty[T](_capacity)
+    ArrayBufferUtils.copyAll(old, _array);
+  }
+
+  _array(_size) = elem
+
+  _size += 1
+}
+\end{lstlisting-nobreak}
+
+In the code snipper above, |_size| represents the actual number of elements that the |ArrayBuffer| contains, and |_capacity| the maximum number of elements that the |ArrayBuffer| can contain before having to resize itself.
+ %To this end, the |ArrayBuffer| needs to keep track of the real number of elements that it contains, because it does not correspond to the size of the underlying array anymore. 
  
 \textbf{Iterable}. Iterating over the entire collection is an operation that is recurrent in algorithms. These algorithms often want to make abstraction of the collection type that is used and only want to express their need to traverse it. |Iterable| is a common interface which can be implemented by every collection that support complete traversal. It requires its implementations to provide access to an |Iterator|, which will itself be used to iterate through the collection. This was implemented in a standard way:
 

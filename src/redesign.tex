@@ -10,7 +10,7 @@ To this end, the design change I opted for was adding more specializations to th
 
 \subsection{Design transformation}
 
-Adding the 8 other specializations was fairly straightforward: All that had to be done was duplicating one of the two existing specialization for every new variants and changing the internal array type |Array[Long]| to the ones adapted for the different specialization.
+Adding the 7 other specializations was fairly straightforward: All that had to be done was duplicating one of the two existing specialization for every new variants and changing the internal array type |Array[Long]| to the ones adapted for the different specialization.
 Then, the code that handled |MbArray| instantiations, namely |MbArray_empty_J|, |MbArray_empty_D|, |MbArray_clone_J| and |MbArray_clone_D|, had to be modified in order to take into accounts the new specializations.
 For example:
 
