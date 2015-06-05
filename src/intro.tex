@@ -4,20 +4,22 @@
 % Summary
 %This section will introduce the reader to the Miniboxing plugin, and more specifically to one of its runtime component, |MbArray|, which has been the focus of my stay in the Programming Methods Laboratory for the last semester. Then, I will briefly state my contributions to the Miniboxing plugin. 
 
-In modern programming languages, genericity allows abstracting over the type, enabling programmers to develop algorithms and data structures regardless of the data being handled. This tremendeously improves productivity and code reuse. Although generics offer a uniform programming experience regardless of the type, the actual data comes in different sizes and shapes. For example, we can equally instantiate generic containers for 1 bit boolean values, 32 bit integer values, or even an object types passed by reference. To resolve the tension between the uniform types and non uniform nature of data, compilers take two different approaches:
+In modern programming languages, genericity allows abstracting over types, enabling programmers to develop algorithms and data structures regardless of the data being handled. This tremendeously improves productivity and code reuse. Although generics offer a uniform programming experience accross different types, the actual data comes in different sizes and shapes. For example, we can equally instantiate generic container for 1 bit boolean values, 32 bit integer values, or even an object types passed by reference. To resolve the tension between the uniform types and non uniform nature of data, compilers take two different approaches:
+
 \begin{description}
-  \item[Homogeneous compilation] imposes a common shape for all incoming data. For example, languages that target the Java Virtual Machine, such as Java, Scala or Kotlin use an object representation even for primitive types. The downside of this approach is that it affects runtime performance: Primitive types such as integers or booleans need to be encoded as objects when entering a generic context, in a process called boxing, which introduces an important overhead.
-  \item[Heterogeneous compilation] duplicates and adapts the generic code for each primitive type. This allows generics to efficiently handle data of different sizes and shapes. In Scala, this is implemented through the specialization transformation. 
+  \item[Homogeneous compilation] imposes a common shape for all incoming data. Its most common implementation is called erasure, and is typically the scheme employed by languages that target the Java Virtual Machine, such as Java, Scala or Kotlin, which use an object representation even for primitive types. The downside of this approach is that it affects runtime performance: Primitive types such as integers or booleans need to be encoded as objects when entering a generic context, in a process called boxing, which negatively impacts performance.
+  \item[Heterogeneous compilation] duplicates and adapts the generic code for each primitive type. This allows it to efficiently handle data of different sizes and shapes. In Scala, this is implemented through the specialization transformation. 
   %The downside of this approach is the amount of code that is generated for each specialized site. For example, in Scala, there are $10$ different primitive types, which implies that code specialized over $1$ type parameter will have to be duplicated $10$ times. While this is still acceptable, it is not anymore when code is specialized over $2$ or $3$ type parameters, producing respectively up to $100$ or $1000$ variants of the code. More generally, code specialized over $n$ type parameters will be duplicate up to $10^n$ times.
 \end{description} 
 
-While specialization is great for performance, the amount of low-level code it generates makes it impractical. The reason is that each generic class is duplicated 10 times, corresponding to the 9 primitive types in Scala plus the objects. Furthermore, for classes with $n$ type parameters, specialization generates the cartesian product of their specializations, producing as many as $10^n$ duplicates. This is where the miniboxing approach comes in, reducing the amount of duplication down to $3^n$.
+While specialization is great for performance, the amount of low-level code it generates makes it impractical. The reason is that each generic class is duplicated 10 times, corresponding to the 9 primitive types in Scala plus an erased version that is used for objects. Furthermore, for classes with $n$ type parameters, specialization generates the cartesian product of their specializations, producing as many as $10^n$ duplicates. This is where the miniboxing approach comes in, reducing the amount of duplication down to $3^n$.
 
-Miniboxing is a middle ground between heterogeneous and homogeneous approaches, encoding several primitive types into a larger one and thus reducing the duplication factor, without paying the price of boxing. In most benchmarks, miniboxing matches the performance of specilization, while generating three times less low-level code.
+Miniboxing is a middle ground between heterogeneous and homogeneous approaches, encoding several primitive types into a larger one and thus reducing the duplication factor, without paying the price of boxing. In most benchmarks, miniboxing matches the performance of specilization, while generating significantly less low-level code.
 
 % MbArrays
 
-In the context of generic programming, one of the problems is implementing bulk storage, exposed in most languages through arrays. Since imposing a homogeneous translation to bulk storage would be terribly inefficient, the current approach is to use specialized arrays, even in generic code. However, this means that generic code cannot directly instantiate arrays, but needs runtime type information, in the form of a class tag:
+In the context of generic programming, one of the problems is implementing bulk storage, exposed in most languages through arrays. Since imposing a homogeneous translation to bulk storage would be terribly inefficient, the current approach is to use specialized arrays, even in generic code. However, in erasure-based homogeneous compilation, all generic type information is erased from the low-level program, such that there is no way for it to know which array to instantiate at runtime. This makes it necessary to have special objects which carry the type information explicitly, commonly known as reified types. In the case of Scala, these objects are called |ClassTag|s:
+ %However, this means that generic code cannot directly instantiate arrays, but needs runtime type information, in the form of a class tag:
 
 \begin{lstlisting-nobreak}
 scala>  def foo[T] = new Array[T](10)
@@ -32,9 +34,10 @@ scala>  def foo[T] = new Array[T](10)
 
 In this context, the contributions of this semester project are:
 \begin{itemize}
-  \item Developping benchmarks that challenge the underlying assumptions of the |MbArray| data structure, and identifying which of them are valid and which need to be revisited;
+  \item Explicitly stating the underlying assumptions of the |MbArray| bulk storage container.
+  \item Developping benchmarks that challenge the underlying assumptions of the |MbArray| data structure, and identifying which of them are valid and which need to be revisited.
   \item Revisiting one of the underlying assumptions of |MbArray|s, proposing an improved approach, and implementing it in practice.
-  \item Validating the improved design using multiple benchmarks
+  \item Validating the improved design using multiple benchmarks.
 \end{itemize}
 
 
