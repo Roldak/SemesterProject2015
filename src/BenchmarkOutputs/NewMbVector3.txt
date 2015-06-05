@@ -1,0 +1,2 @@
+[GC (Allocation Failure)  408657K->164465K(1045504K), 0.0138936 secs]
+	9. : 325ms (GC : 14ms)

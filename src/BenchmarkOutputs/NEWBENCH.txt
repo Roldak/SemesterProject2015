@@ -2,14 +2,14 @@ ALL IN ONE :
 
 CT : 
 
-[GC (Allocation Failure)  331636K->115092K(1009152K), 0.0088225 secs]
-[GC (Allocation Failure)  385428K->164252K(1009152K), 0.0113871 secs]
-[GC (Allocation Failure)  434588K->172444K(1013760K), 0.0017085 secs]
-[GC (Allocation Failure)  448924K->197004K(1009152K), 0.0062809 secs]
-[GC (Allocation Failure)  473484K->328108K(1007104K), 0.0231352 secs]
-[GC (Allocation Failure)  596396K->344492K(1008128K), 0.0035307 secs]
-[GC (Allocation Failure)  591735K->393652K(998400K), 0.0080489 secs]
-	9. : 62ms
+[GC (Allocation Failure)  331636K->115092K(1009152K), 0.0104412 secs]
+[GC (Allocation Failure)  385428K->164252K(1009152K), 0.0112601 secs]
+[GC (Allocation Failure)  434588K->172444K(1013248K), 0.0017833 secs]
+[GC (Allocation Failure)  448412K->197004K(1008640K), 0.0060402 secs]
+[GC (Allocation Failure)  472972K->328108K(1007616K), 0.0329832 secs]
+[GC (Allocation Failure)  596396K->344492K(1008128K), 0.0032716 secs]
+[GC (Allocation Failure)  591721K->393652K(998400K), 0.0084239 secs]
+	9. : 685ms (GC : 73ms)
 	
 NEW :
 

@@ -119,3 +119,39 @@ It is now time to compare the old numbers to the numbers we obtain by running th
 \caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements}
 \label{fig:NewGcComp}
 \end{figure}
+
+In this initial benchmark the |MbArray| version did not prove to be faster than the |ClassTag| version. However, most of the benchmark do show better numbers for the |MbArray|. For example, benchmark \ref{fig:OtherCTvsMB} shows that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s. In almost every cases, the version using new |MbArray|s is faster than the version using old |MbArray|s which essentially means that it is in some cases running equivalently fast as the |ClassTag| version -- as shows benchmark \ref{fig:NewCTvsMB} --, but is in most cases faster than the |ClassTag| version, benchmark \ref{OtherCTvsMB} being a good example of this.  
+
+\begin{figure}
+\subfigure[ClassTag version]{
+	\lstinputlisting{BenchmarkOutputs/CtVector2.txt}	
+	\label{fig:CtVector0}
+}
+\subfigure[Old Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/MbVector2.txt}
+    \label{fig:MbVector0}
+}
+\subfigure[New Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/NewMbVector2.txt}
+    \label{fig:NewMbVector0}
+}
+\caption{New Scalameter benchmark outputs}
+\label{fig:OtherCTvsMB}
+\end{figure}  
+
+\begin{figure}
+\subfigure[ClassTag version]{
+	\lstinputlisting{BenchmarkOutputs/CtVector3.txt}
+	\label{fig:CtVector1}
+}
+\subfigure[Old Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/MbVector3.txt}
+    \label{fig:MbVector1}
+}
+\subfigure[New Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/NewMbVector3.txt}
+    \label{fig:NewMbVector1}
+}
+\caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements}
+\label{fig:OtherGcComp}
+\end{figure}
