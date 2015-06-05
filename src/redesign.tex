@@ -2,4 +2,83 @@
 \label{sec:redesign}
 
 After having brought out the flow in the current |MbArray| design that slows down its performance, I will present the approach I took in order to address the issue.
- 
+
+\subsection{The Goal}
+
+Ultimately, the goal is to keep the mechanisms in |MbArray|s that are working, but to decrease the memory needed for that.
+To this end, the design change I opted for was adding more specializations to the |MbArray|s: one for each primitive type that exists in Scala. In other words, an |MbArray[Boolean]| would get transformed to |MbArray_B| which uses a |boolean[]| internally instead of the prevous |long[]|, and so on equivalently for every of the 10 primitive types that exist in Scala. Hopefully, this would result in less heap memory wasted and therefore a higher GC throughput.
+
+\subsection{Design transformation}
+
+Adding the 8 other specializations was fairly straightforward: All that had to be done was duplicating one of the two existing specialization for every new variants and changing the internal array type |Array[Long]| to the ones adapted for the different specialization.
+Then, the code that handled |MbArray| instantiations, namely |MbArray_empty_J|, |MbArray_empty_D|, |MbArray_clone_J| and |MbArray_clone_D|, had to be modified in order to take into accounts the new specializations.
+For example:
+
+\begin{lstlisting-nobreak-java}
+public static <T> MbArray<T> mbArray_empty_J(int size, byte T_Tag) {
+  return new MbArray_J<T>(T_Tag, size);
+}
+\end{lstlisting-nobreak-java}
+
+Was transformed to:
+
+\begin{lstlisting-nobreak-java}
+public static <T> MbArray<T> mbArray_empty_J(int size, byte T_Tag) {
+  switch(T_Tag) {
+  case MiniboxConstants.LONG:
+    return new MbArray_J<T>(size);
+  case MiniboxConstants.INT:
+    return new MbArray_I<T>(size);
+  case MiniboxConstants.SHORT:
+    return new MbArray_S<T>(size);
+  case MiniboxConstants.CHAR:
+    return new MbArray_C<T>(size);
+  case MiniboxConstants.BYTE:
+    return new MbArray_B<T>(size);
+  case MiniboxConstants.BOOLEAN:
+    return new MbArray_Z<T>(size);
+  case MiniboxConstants.UNIT:
+    return new MbArray_V<T>(size);
+  default:
+    return new MbArray_L<T>(size);
+  }
+}
+\end{lstlisting-nobreak-java}
+
+Similarly, the |apply| and |update| methods had to be changed.
+For example:
+
+\begin{lstlisting-nobreak-java}
+public static <T> long mbArray_apply_J(MbArray<T> mbArray, int index, byte T_Tag) {
+  if (mbArray instanceof MbArray_J<?>)
+    return ((MbArray_J<?>)mbArray).apply_J(index);
+  else
+    return MiniboxConversionsLong.box2minibox_tt(
+    	mbArray.apply(index), T_Tag);
+}
+\end{lstlisting-nobreak-java}
+
+Became:
+
+\begin{lstlisting-nobreak-java}
+public static <T> long mbArray_apply_J(MbArray<T> mbArray, int index, byte T_Tag) {
+  if (mbArray instanceof MbArray_J<?>)
+    return ((MbArray_J<?>)mbArray).apply_J(index);
+  else if (mbArray instanceof MbArray_I<?>)
+    return ((MbArray_I<?>)mbArray).apply_J(index);
+  else if (mbArray instanceof MbArray_S<?>)
+    return ((MbArray_S<?>)mbArray).apply_J(index);
+  else if (mbArray instanceof MbArray_C<?>)
+    return ((MbArray_C<?>)mbArray).apply_J(index);
+  else if (mbArray instanceof MbArray_B<?>)
+    return ((MbArray_B<?>)mbArray).apply_J(index);
+  else if (mbArray instanceof MbArray_Z<?>)
+    return ((MbArray_Z<?>)mbArray).apply_J(index);
+  else if (mbArray instanceof MbArray_V<?>)
+    return ((MbArray_V<?>)mbArray).apply_J(index);
+  else
+    return MiniboxConversionsLong.<T>box2minibox_tt(
+    	mbArray.apply(index), T_Tag);
+}
+\end{lstlisting-nobreak-java}
+
