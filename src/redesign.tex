@@ -84,43 +84,25 @@ public static <T> long mbArray_apply_J(MbArray<T> mbArray, int index, byte T_Tag
 
 \subsection{Re-benchmarking}
 
-It is now time to compare the old numbers to the numbers we obtain by running the same benchmark with the new |MbArray|. Figure \ref{fig:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends |~|3 times less time collecting garbage than the old version, from which follows a |~100ms| runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of |~70ms| for other reasons. In average, the new version is $25\%$ faster than the old version in this benchmark.
+It is now time to compare the old numbers to the numbers we obtain by running the same benchmark with the new |MbArray|. Table \ref{table:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends |~|3 times less time collecting garbage than the old version, from which follows a |~100ms| runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of |~70ms| for other reasons. In average, the new version is $25\%$ faster than the old version in this benchmark.
 
-\begin{figure}
-\subfigure[ClassTag version]{
-	\lstinputlisting{BenchmarkOutputs/CtVector0.txt}	
-	\label{fig:CtVector0}
-}
-\subfigure[Old Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/MbVector0.txt}
-    \label{fig:MbVector0}
-}
-\subfigure[New Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/NewMbVector0.txt}
-    \label{fig:NewMbVector0}
-}
-\caption{New Scalameter benchmark outputs}
-\label{fig:NewCTvsMB}
-\end{figure}  
+\input{BenchmarkOutputs/NewBenchSM.tex}
 
 \begin{figure}
 \subfigure[ClassTag version]{
 	\lstinputlisting{BenchmarkOutputs/CtVector1.txt}
-	\label{fig:CtVector1}
 }
 \subfigure[Old Miniboxed version]{
 	\lstinputlisting{BenchmarkOutputs/MbVector1.txt}
-    \label{fig:MbVector1}
 }
 \subfigure[New Miniboxed version]{
 	\lstinputlisting{BenchmarkOutputs/NewMbVector1.txt}
-    \label{fig:NewMbVector1}
 }
 \caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements}
 \label{fig:NewGcComp}
 \end{figure}
 
-Looking at the initial benchmark, even the new |MbArray| version does not seem to be a lot faster than the |ClassTag| version. However, most of the benchmark \emph{do} show better numbers for the new |MbArray|. For example, benchmark \ref{fig:OtherCTvsMB} shows that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s. Also, figure \ref{fig:OtherGcComp} shows how the version using new |MbArray|s spends approximately $650\%$ less time collecting garbage. Note that the only difference in the source code between this benchmark and the initial one is that instead of:
+Looking at the initial benchmark, even the new |MbArray| version does not seem to be a lot faster than the |ClassTag| version. However, most of the benchmark \emph{do} show better numbers for the new |MbArray|. For example, benchmark outputs from table \ref{table:OtherCTvsMB} show that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s. Also, figure \ref{fig:OtherGcComp} shows how the version using new |MbArray|s spends approximately $650\%$ less time collecting garbage. Note that the only difference in the source code between this benchmark and the initial one is that instead of:
 
 \begin{lstlisting-nobreak}
   using(vectors) setUp {
@@ -148,39 +130,21 @@ It is worth noting that the speed factor increases when less memory is assigned 
 
 \subsection{Conclusion}
 
-In almost every cases, the version using new |MbArray|s is faster than the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{fig:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, benchmark \ref{fig:OtherCTvsMB} being a good example of this. 
+In almost every cases, the version using new |MbArray|s is faster than the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{table:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, benchmark \ref{table:OtherCTvsMB} being a good example of this. 
 
-\begin{figure}
-\subfigure[ClassTag version]{
-	\lstinputlisting{BenchmarkOutputs/CtVector2.txt}	
-	\label{fig:CtVector0}
-}
-\subfigure[Old Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/MbVector2.txt}
-    \label{fig:MbVector0}
-}
-\subfigure[New Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/NewMbVector2.txt}
-    \label{fig:NewMbVector0}
-}
-\caption{Scalameter benchmark outputs. Using map(\_ + 2.5f) instead of map(\_ + 2)}
-\label{fig:OtherCTvsMB}
-\end{figure}
+\input{BenchmarkOutputs/OtherBenchSM.tex}
 
 \begin{figure}
 \subfigure[ClassTag version]{
 	\lstinputlisting{BenchmarkOutputs/CtVector3.txt}
-	\label{fig:CtVector1}
 }
 \subfigure[Old Miniboxed version]{
 	\lstinputlisting{BenchmarkOutputs/MbVector3.txt}
-    \label{fig:MbVector1}
 }
 \subfigure[New Miniboxed version]{
 	\lstinputlisting{BenchmarkOutputs/NewMbVector3.txt}
-    \label{fig:NewMbVector1}
 }
-\caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements using map(\_ + 2.5f) instead of map(\_ + 2)}
+\caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements with mappings to float-point values}
 \label{fig:OtherGcComp}
 \end{figure}
 
@@ -196,11 +160,3 @@ Curabitur eleifend pellentesque tellus. In vehicula placerat lacinia. Proin ut s
 
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sed dictum felis. Maecenas in neque viverra, iaculis augue facilisis, ornare risus. Phasellus sollicitudin tempus tempor. Suspendisse vel velit eget urna ullamcorper congue. Mauris et tellus at tortor tempor blandit. Nam cursus lorem id arcu consequat fermentum. Nullam quis mi et lacus placerat tempor. Vestibulum gravida eu dui sed condimentum.
-
-Duis mattis rutrum magna, nec venenatis justo vehicula sed. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vitae risus diam. Suspendisse in iaculis lorem. In mattis laoreet posuere. Integer ac lacus libero. Nunc vehicula, mauris vestibulum vestibulum imperdiet, orci massa vestibulum sapien, sed maximus ante velit varius dui. Cras nec mauris facilisis, mattis mi id, auctor massa. Fusce volutpat maximus sapien, luctus posuere tortor. Aliquam erat volutpat. Suspendisse est ante, porta quis tempus non, fringilla fringilla ligula. Nulla luctus a lorem at cursus. Aenean ac dolor ac arcu interdum malesuada a vel sapien.
-
-Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Vestibulum lorem urna, tristique eget massa a, molestie aliquam neque. Suspendisse at interdum nunc, sit amet tincidunt tortor. Pellentesque a mauris auctor, dictum libero sit amet, blandit sem. Nulla facilisi. In eget ultrices nulla. Fusce suscipit aliquam ex, id ultrices nisl interdum nec. Pellentesque aliquam lorem eu velit consequat congue. Aliquam facilisis, odio eget faucibus dignissim, eros magna ullamcorper lectus, vitae molestie felis neque sit amet lectus. Integer mollis lectus facilisis, congue nulla venenatis, varius magna.
-
-Maecenas vitae interdum orci. Donec suscipit lacinia nibh, vitae vestibulum velit commodo non. Etiam ac arcu blandit quam bibendum luctus quis ac sapien. Duis vitae enim iaculis, scelerisque magna quis, imperdiet risus. Fusce faucibus a dolor quis malesuada. Duis aliquam, ipsum in interdum iaculis, libero dui tincidunt quam, ut sodales sapien turpis sed tellus. Maecenas consectetur mi ac erat imperdiet auctor. Curabitur congue augue et gravida iaculis. In ultricies augue id orci mattis venenatis a nec est. Mauris fringilla tempor mattis.
-
-Curabitur eleifend pellentesque tellus. In vehicula placerat lacinia. Proin ut scelerisque quam, ac maximus diam. Sed cursus mauris eget porta blandit. Vestibulum a dolor sit amet eros molestie tincidunt sed eget mi. Nunc sit amet diam nulla. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. 

@@ -126,21 +126,9 @@ object MbVectorBenchmark extends PerformanceTest.Quickbenchmark {
 
 \subsection{The Numbers}
 
-Unfortunately, the numbers produced by running the benchmark above did not look as good as we could have (rightfully) expected, as it can be seen in figure \ref{fig:InitCTvsMB}.
+Unfortunately, the numbers produced by running the benchmark above did not look as good as we could have (rightfully) expected, as it can be seen in figure \ref{table:InitCTvsMB}.
 Surprisingly, the |MbArray| version showed to be approximately $10\%$ slower than the |ClassTag| version, which is completely contradictory with what has been stated earlier!
 
-\begin{figure}
-\subfigure[ClassTag version]{
-	\lstinputlisting{BenchmarkOutputs/CtVector0.txt}	
-	\label{fig:CtVector0}
-}
-\subfigure[Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/MbVector0.txt}
-    \label{fig:MbVector0}
-}
-\caption{Initial Scalameter benchmark outputs}
-\label{fig:InitCTvsMB}
-\end{figure} 
-
+\input{BenchmarkOutputs/InitBenchSM.tex}
 
 %In the optic of experimenting real world scenarios with the miniboxing transformation

@@ -1,0 +1,15 @@
+\begin{table}[t]
+  \begin{tabularx}{0.48\textwidth}{|g *{3}{|Y}|} \hline
+    \rowcolor{Gray}
+    \textbf{Size} & \textbf{ClassTag} & \textbf{Old MbArray}& \textbf{New MbArray} \\
+    300000		&              22.68 ms  &              11.65 ms &             9.47 ms \\
+    600000		&              45.77 ms	 &              23.28 ms &             18.23 ms \\
+    900000      &              57.04 ms  &              29.02 ms &             24.13 ms \\
+    1200000     &              93.44 ms  &              44.66 ms &             35.91 ms \\ 
+    1500000     &              104.33 ms &              50.88 ms &             42.67 ms \\ \hline
+  \end{tabularx}
+  \vspace{-2mm}
+  \caption{Scalameter benchmark outputs. Mapping to floating-point values}
+  \label{table:OtherCTvsMB}
+  \vspace{-1em}
+\end{table}
