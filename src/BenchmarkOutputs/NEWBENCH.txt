@@ -1,0 +1,51 @@
+ALL IN ONE : 
+
+CT : 
+
+[GC (Allocation Failure)  331636K->115092K(1009152K), 0.0088225 secs]
+[GC (Allocation Failure)  385428K->164252K(1009152K), 0.0113871 secs]
+[GC (Allocation Failure)  434588K->172444K(1013760K), 0.0017085 secs]
+[GC (Allocation Failure)  448924K->197004K(1009152K), 0.0062809 secs]
+[GC (Allocation Failure)  473484K->328108K(1007104K), 0.0231352 secs]
+[GC (Allocation Failure)  596396K->344492K(1008128K), 0.0035307 secs]
+[GC (Allocation Failure)  591735K->393652K(998400K), 0.0080489 secs]
+	9. : 62ms
+	
+NEW :
+
+[GC (Allocation Failure)  408657K->164465K(1045504K), 0.0138936 secs]
+	9. : 325ms (GC : 14ms)
+	
+OLD :
+
+[GC (Allocation Failure)  397484K->197233K(1046016K), 0.0108102 secs]
+[GC (Allocation Failure)  525167K->361081K(1046528K), 0.0241026 secs]
+[GC (Allocation Failure)  691468K->557697K(1046528K), 0.0297168 secs]
+[Full GC (Ergonomics)  557697K->328273K(1046528K), 0.0269909 secs]
+	9. : 425ms (GC : 91ms)
+
+SCALAMETER : 
+
+CT : 
+
+Parameters(size -> 300000): 22.68262947222222
+Parameters(size -> 600000): 45.76907072222222
+Parameters(size -> 900000): 57.03832569444445
+Parameters(size -> 1200000): 93.43644833333332
+Parameters(size -> 1500000): 104.33464258333335
+
+NEW : 
+
+Parameters(size -> 300000): 9.47477283333333
+Parameters(size -> 600000): 18.230600638888884
+Parameters(size -> 900000): 24.12560391666667
+Parameters(size -> 1200000): 35.90508538888889
+Parameters(size -> 1500000): 42.67105297222223
+
+OLD : 
+
+Parameters(size -> 300000): 11.653026666666664
+Parameters(size -> 600000): 23.282662916666666
+Parameters(size -> 900000): 29.016321999999988
+Parameters(size -> 1200000): 44.661257750000004
+Parameters(size -> 1500000): 50.87757138888888
