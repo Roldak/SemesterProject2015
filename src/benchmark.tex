@@ -27,7 +27,7 @@ buf(1) = 2
 buf.append(3) // buf now contains {1, 2, 3}
 \end{lstlisting-nobreak}
 
-However, this feature is not proposed by default by the underlying array -- neither |Array| nor |MbArray| implements it. One way to implement this feature is to naively re-instantiate the underlying array with a size $n + 1$ each time an element is appended, where $n$ is the previous size of the array, and to then copy the content of the old array to the new one.
+However, this feature is not proposed by default by the underlying array -- neither |Array| nor |MbArray| implements it. One way to implement this feature is to naively re-instantiate the underlying array with a size $n + 1$ each time an element is appended, where $n$ is the previous size of the array, and to then copy the content of the old array into the new one.
 While it is simple to implement, it has major performance issues in case several |append| calls are done sequentially to a decently large |ArrayBuffer|.
 % example maybe ?
 
@@ -126,8 +126,8 @@ object MbVectorBenchmark extends PerformanceTest.Quickbenchmark {
 
 \subsection{The Numbers}
 
-Unfortunately, the numbers produced by running the benchmark above did not look as good as we could have -- rightfully -- expected, as it can be seen in figure \ref{fig:InitCTvsMB}.
-Surprisingly, the |MbArray| version showed to be approximately $10\%$ slower than the |ClassTag| version!
+Unfortunately, the numbers produced by running the benchmark above did not look as good as we could have (rightfully) expected, as it can be seen in figure \ref{fig:InitCTvsMB}.
+Surprisingly, the |MbArray| version showed to be approximately $10\%$ slower than the |ClassTag| version, which is completely contradictory with what has been stated earlier!
 
 \begin{figure}
 \subfigure[ClassTag version]{

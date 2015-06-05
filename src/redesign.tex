@@ -1,7 +1,7 @@
 \section{Redesigning MbArrays}
 \label{sec:redesign}
 
-After having brought out the flow in the current |MbArray| design that slows down its performance, I will present the approach I took in order to address the issue.
+After having exposed the flow in the current |MbArray| design that slows down its performance, I will present the approach I took in order to address it.
 
 \subsection{The Goal}
 
@@ -120,7 +120,7 @@ It is now time to compare the old numbers to the numbers we obtain by running th
 \label{fig:NewGcComp}
 \end{figure}
 
-In the initial benchmark, the |MbArray| version did not show to be faster than the |ClassTag| version. However, most of the benchmark do show better numbers for the |MbArray|. For example, benchmark \ref{fig:OtherCTvsMB} shows that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s, and figure \ref{fig:OtherGcComp} shows how the version using new |MbArray|s spends $650\%$ less time collecting garbage. Note that the only difference in the source code of this benchmark compared to the initial one is that instead of:
+Looking at the initial benchmark, even the new |MbArray| version does not seem to be a lot faster than the |ClassTag| version. However, most of the benchmark \emph{do} show better numbers for the new |MbArray|. For example, benchmark \ref{fig:OtherCTvsMB} shows that the version using new |MbArray|s can be approximately $250\%$ faster than the version using |ClassTag|s and $20\%$ faster than the version using the old |MbArray|s. Also, figure \ref{fig:OtherGcComp} shows how the version using new |MbArray|s spends approximately $650\%$ less time collecting garbage. Note that the only difference in the source code between this benchmark and the initial one is that instead of:
 
 \begin{lstlisting-nobreak}
   using(vectors) setUp {
@@ -144,9 +144,11 @@ It is doing :
   }
 \end{lstlisting-nobreak}
 
+It is worth noting that the speed factor increases when less memory is assigned to the JVM. For example, running the benchmark on a JVM which disposes of less than $400M$ completely crashes the version using the old |MbArray|s by throwing an |OutOfMemory| exception. While the amount of memory assigned is between $400M$ and $512M$, the old |MbArray| version performs really bad compared to the two other versions. Finally, when more than $512M$ is assigned, we obtain the numbers that have been shown so far: in every benchmark, the JVM was allowed to allocated up to $2G$.
+
 \subsection{Conclusion}
 
-In almost every cases, the version using new |MbArray|s is faster than the version using old |MbArray|s which essentially means that it is in some cases running equivalently fast as the |ClassTag| version -- as shows benchmark \ref{fig:NewCTvsMB} --, but is in most cases faster than the |ClassTag| version, benchmark \ref{fig:OtherCTvsMB} being a good example of this.  
+In almost every cases, the version using new |MbArray|s is faster than the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{fig:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, benchmark \ref{fig:OtherCTvsMB} being a good example of this. 
 
 \begin{figure}
 \subfigure[ClassTag version]{
@@ -181,3 +183,24 @@ In almost every cases, the version using new |MbArray|s is faster than the versi
 \caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements using map(\_ + 2.5f) instead of map(\_ + 2)}
 \label{fig:OtherGcComp}
 \end{figure}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sed dictum felis. Maecenas in neque viverra, iaculis augue facilisis, ornare risus. Phasellus sollicitudin tempus tempor. Suspendisse vel velit eget urna ullamcorper congue. Mauris et tellus at tortor tempor blandit. Nam cursus lorem id arcu consequat fermentum. Nullam quis mi et lacus placerat tempor. Vestibulum gravida eu dui sed condimentum.
+
+Duis mattis rutrum magna, nec venenatis justo vehicula sed. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vitae risus diam. Suspendisse in iaculis lorem. In mattis laoreet posuere. Integer ac lacus libero. Nunc vehicula, mauris vestibulum vestibulum imperdiet, orci massa vestibulum sapien, sed maximus ante velit varius dui. Cras nec mauris facilisis, mattis mi id, auctor massa. Fusce volutpat maximus sapien, luctus posuere tortor. Aliquam erat volutpat. Suspendisse est ante, porta quis tempus non, fringilla fringilla ligula. Nulla luctus a lorem at cursus. Aenean ac dolor ac arcu interdum malesuada a vel sapien.
+
+Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Vestibulum lorem urna, tristique eget massa a, molestie aliquam neque. Suspendisse at interdum nunc, sit amet tincidunt tortor. Pellentesque a mauris auctor, dictum libero sit amet, blandit sem. Nulla facilisi. In eget ultrices nulla. Fusce suscipit aliquam ex, id ultrices nisl interdum nec. Pellentesque aliquam lorem eu velit consequat congue. Aliquam facilisis, odio eget faucibus dignissim, eros magna ullamcorper lectus, vitae molestie felis neque sit amet lectus. Integer mollis lectus facilisis, congue nulla venenatis, varius magna.
+
+Maecenas vitae interdum orci. Donec suscipit lacinia nibh, vitae vestibulum velit commodo non. Etiam ac arcu blandit quam bibendum luctus quis ac sapien. Duis vitae enim iaculis, scelerisque magna quis, imperdiet risus. Fusce faucibus a dolor quis malesuada. Duis aliquam, ipsum in interdum iaculis, libero dui tincidunt quam, ut sodales sapien turpis sed tellus. Maecenas consectetur mi ac erat imperdiet auctor. Curabitur congue augue et gravida iaculis. In ultricies augue id orci mattis venenatis a nec est. Mauris fringilla tempor mattis.
+
+Curabitur eleifend pellentesque tellus. In vehicula placerat lacinia. Proin ut scelerisque quam, ac maximus diam. Sed cursus mauris eget porta blandit. Vestibulum a dolor sit amet eros molestie tincidunt sed eget mi. Nunc sit amet diam nulla. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. 	
+
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sed dictum felis. Maecenas in neque viverra, iaculis augue facilisis, ornare risus. Phasellus sollicitudin tempus tempor. Suspendisse vel velit eget urna ullamcorper congue. Mauris et tellus at tortor tempor blandit. Nam cursus lorem id arcu consequat fermentum. Nullam quis mi et lacus placerat tempor. Vestibulum gravida eu dui sed condimentum.
+
+Duis mattis rutrum magna, nec venenatis justo vehicula sed. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vitae risus diam. Suspendisse in iaculis lorem. In mattis laoreet posuere. Integer ac lacus libero. Nunc vehicula, mauris vestibulum vestibulum imperdiet, orci massa vestibulum sapien, sed maximus ante velit varius dui. Cras nec mauris facilisis, mattis mi id, auctor massa. Fusce volutpat maximus sapien, luctus posuere tortor. Aliquam erat volutpat. Suspendisse est ante, porta quis tempus non, fringilla fringilla ligula. Nulla luctus a lorem at cursus. Aenean ac dolor ac arcu interdum malesuada a vel sapien.
+
+Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Vestibulum lorem urna, tristique eget massa a, molestie aliquam neque. Suspendisse at interdum nunc, sit amet tincidunt tortor. Pellentesque a mauris auctor, dictum libero sit amet, blandit sem. Nulla facilisi. In eget ultrices nulla. Fusce suscipit aliquam ex, id ultrices nisl interdum nec. Pellentesque aliquam lorem eu velit consequat congue. Aliquam facilisis, odio eget faucibus dignissim, eros magna ullamcorper lectus, vitae molestie felis neque sit amet lectus. Integer mollis lectus facilisis, congue nulla venenatis, varius magna.
+
+Maecenas vitae interdum orci. Donec suscipit lacinia nibh, vitae vestibulum velit commodo non. Etiam ac arcu blandit quam bibendum luctus quis ac sapien. Duis vitae enim iaculis, scelerisque magna quis, imperdiet risus. Fusce faucibus a dolor quis malesuada. Duis aliquam, ipsum in interdum iaculis, libero dui tincidunt quam, ut sodales sapien turpis sed tellus. Maecenas consectetur mi ac erat imperdiet auctor. Curabitur congue augue et gravida iaculis. In ultricies augue id orci mattis venenatis a nec est. Mauris fringilla tempor mattis.
+
+Curabitur eleifend pellentesque tellus. In vehicula placerat lacinia. Proin ut scelerisque quam, ac maximus diam. Sed cursus mauris eget porta blandit. Vestibulum a dolor sit amet eros molestie tincidunt sed eget mi. Nunc sit amet diam nulla. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. 
