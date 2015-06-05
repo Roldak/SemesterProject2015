@@ -1,0 +1,5 @@
+Parameters(size -> 300000): 14.468805
+Parameters(size -> 600000): 27.340216833333336
+Parameters(size -> 900000): 36.719824888888894
+Parameters(size -> 1200000): 56.13767527777778
+Parameters(size -> 1500000): 65.47487436111112

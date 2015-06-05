@@ -1,0 +1,6 @@
+[GC (Allocation Failure)  266978K->98922K(987648K), 0.0057464 secs]
+[GC (Allocation Failure)  333418K->143986K(991232K), 0.0126919 secs]
+[GC (Allocation Failure)  378482K->230010K(989184K), 0.0143148 secs]
+[GC (Allocation Failure)  451384K->213634K(992256K), 0.0030312 secs]
+[GC (Allocation Failure)  450178K->295562K(989696K), 0.0139287 secs]
+	9. : 578ms (GC : 48ms)

@@ -82,3 +82,45 @@ public static <T> long mbArray_apply_J(MbArray<T> mbArray, int index, byte T_Tag
 }
 \end{lstlisting-nobreak-java}
 
+\subsection{Re-benchmarking}
+
+It is now time to compare the old numbers to the numbers we obtain by running the same benchmark with the new |MbArray|. Figure \ref{fig:NewCTvsMB} shows that the new version performs |~|. Moreover, figure \ref{fig:NewGcComp} shows how the new version uses |~|3 times less memory than the old version, from which follows a |~100ms| runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version performs gets a boost of |~70ms| . 
+
+\begin{figure}
+\centering
+\subfigure[ClassTag version]{
+	\lstinputlisting{BenchmarkOutputs/CtVector0.txt}	
+	\label{fig:CtVector0}
+}
+\subfigure[Old Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/MbVector0.txt}
+    \label{fig:MbVector0}
+}
+\subfigure[New Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/NewMbVector0.txt}
+    \label{fig:NewMbVector0}
+}
+\caption{New Scalameter benchmark outputs}
+\label{fig:NewCTvsMB}
+\end{figure}  
+
+\begin{figure}
+\centering
+\subfigure[ClassTag version]{
+	\lstinputlisting{BenchmarkOutputs/CtVector1.txt}
+	\newline
+	\label{fig:CtVector1}
+}
+\subfigure[Old Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/MbVector1.txt}
+	\newline
+    \label{fig:MbVector1}
+}
+\subfigure[New Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/NewMbVector1.txt}
+	\newline
+    \label{fig:NewMbVector1}
+}
+\caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements}
+\label{fig:NewGcComp}
+\end{figure}
