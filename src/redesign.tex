@@ -1,11 +1,11 @@
 \section{Redesigning MbArrays}
 \label{sec:redesign}
 
-After having exposed the flow in the current |MbArray| design that slows down its performance, I will present the approach I took in order to address it.
+After having exposed the flow in the current |MbArray| design that slows down its performance, I present the approach I took in order to address it.
 
 \subsection{The Goal}
 
-Ultimately, the goal is to keep the mechanisms in |MbArray|s that are working, but to decrease the memory needed for that.
+The goal is to keep the mechanisms in |MbArray|s that are working, but to decrease the memory needed for that.
 To this end, the design change I opted for was adding more specializations to the |MbArray|s: one for each primitive type that exists in Scala. In other words, an |MbArray[Boolean]| would get transformed to |MbArray_B| which uses a |boolean[]| internally instead of the prevous |long[]|, and so on equivalently for every of the 10 primitive types that exist in Scala. Hopefully, this would result in less heap memory wasted and therefore a higher GC throughput.
 
 \subsection{Design transformation}
@@ -84,7 +84,7 @@ public static <T> long mbArray_apply_J(MbArray<T> mbArray, int index, byte T_Tag
 
 \subsection{Re-benchmarking}
 
-It is now time to compare the old numbers to the numbers we obtain by running the same benchmark with the new |MbArray|. Table \ref{table:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends 3$\times$ less time collecting garbage than the old version, from which follows a 100ms runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of 70ms for other reasons. In average, the new version is 25\% faster than the old version in this benchmark.
+Following the transformation, we re-benchmarked out example programs using the new |MbArray|. Table \ref{table:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends 3$\times$ less time collecting garbage than the old version, from which follows a 100ms runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of 70ms from the fact that less memory is used, thus reducing the amount of memory that needs to be read. In average, the new version is 25\% faster than the old version in this benchmark.
 
 \input{BenchmarkOutputs/NewBenchSM.tex}
 
