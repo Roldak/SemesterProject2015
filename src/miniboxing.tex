@@ -69,7 +69,7 @@ Taking a low level perspective, we can observe the fact that all primitive types
  val five = identity(5)
 \end{lstlisting-nobreak}
 
-Since the type parameter is annotated with |@miniboxed|, the compiler\footnote{In the rest of the paper we assume the miniboxing Scala complier plugin is active unless otherwise noted. For more information on adding the miniboxing plugin to the build please see \url{http://scala-miniboxing.org}.} translates the code to:
+Since the type parameter is annotated with |@miniboxed|, the compiler\footnote{This occurs in the presence of the miniboxing plugin attached to the Scala compiler. In the rest of the paper we assume the miniboxing Scala complier plugin is active unless otherwise noted. For more information on adding the miniboxing plugin to the build please see \url{http://scala-miniboxing.org}.} translates the code to:
 
 \begin{lstlisting-nobreak}
  def identity(t: Object): Object = t
@@ -82,57 +82,3 @@ Alert readers will notice the |minibox2int| and |int2minibox| transformations ac
 
 % Ellipsis => Type tags + send to the papers
 There is an elipsis in the definition of the |identity_M| method, which stands for what we call a type byte: a byte describing the type encoded in the long integer, allowing the operations such as |toString|, |hashCode| or |equals| to be executed correctly on encoded values, treating them as the original primitive (corresponding to |T|) rather than long integers. Although the transformation looks simple, there are many subtleties we have to take into account when transforming the code \cite{miniboxing,miniboxing-linkedlist,ldl}.
-
-\subsection{Class Transformation}
-
-% Object encoding => Example
-One of the most subtle aspects of the miniboxing transformation is how it transforms classes: it has to preserve the inheritance relation while providing specialized variants of the class, where fields are encoded as miniboxed long integers instead of |Object|s. To show the example, let us take a simple linked list node class:
-
-\begin{lstlisting-nobreak}
- class Node[`@miniboxed` T](val head:T, val tail:Node[T])
-\end{lstlisting-nobreak}
-
-A simple desugaring for class |Node| is (some details omitted):
-
-\begin{lstlisting-nobreak}
- class Node[`@miniboxed` T](_head: T, _tail: Node[T]) {
-   def head: T = this.head                 // getter for _head
-   def tail: Node[T] = this.tail // getter for _tail
- }
-\end{lstlisting-nobreak}
-
-% Method and accessor variants
-There are three subtleties in the |Node| translation:
-\begin{compactitem}
-  \item First, there should be two versions of the class: one where the |head| is a long integer and one where it is an |Object|;
-  \item Then, types like |Node[_]| can be instantiated by both classes, so they need to have a common interface;
-  \item Finally, the interface has to contain the specialized methods of both classes (so both classes should implement all the methods).
-\end{compactitem}
-
-When miniboxing is active, the |Node| class is transformed into an interface:
-
-\begin{lstlisting-nobreak}
- interface Node {
-   def head: Object
-   def head_J(...): long
-   def tail: Node[T]
- }
-\end{lstlisting-nobreak}
-
-With two implementations:
-
-\begin{lstlisting-nobreak}
- class Node_L(_head: `Object`, _tail: Node_L) impl Node {
-   def head: Object = this._head
-   def head_J(...): long = `box2minibox`(..., `head`)
-   def tail: Node[T] = this._tail
- }
-
- class Node_J(..., _head: `long`, _tail: Node_L) ... {
-   def head: Object = `minibox2box`(..., `head_J`(...))
-   def head_J(...): long = this._head
-   def tail: Node[T] = this._tail
- }
-\end{lstlisting-nobreak}
-
-This translation scheme, although not the only one, satisfies the three criteria set above.

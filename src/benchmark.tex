@@ -139,7 +139,7 @@ trait Builder[@miniboxed T, Container[_]] {
 }
 \end{lstlisting-nobreak}
 
-Concretely, the |Builder| implementation for the |ArrayBuffer| is done the following way:
+The |Builder| implementation for the |ArrayBuffer| is done the following way:
 
 \begin{lstlisting-nobreak}
 class ArrayBufferBuilder[@miniboxed T] extends Builder[T, ArrayBuffer] {

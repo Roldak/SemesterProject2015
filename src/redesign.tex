@@ -102,7 +102,7 @@ Following the transformation, we re-benchmarked out example programs using the n
 \label{fig:NewGcComp}
 \end{figure}
 
-Looking at the initial benchmark, even the new |MbArray| version does not seem to be a lot faster than the |ClassTag| version. However, most of the benchmark \emph{do} show better numbers for the new |MbArray|. For example, another benchmark was developped, which results can be seen in table \ref{table:OtherCTvsMB}, which show that the version using new |MbArray|s can be approximately 250\% faster than the version using |ClassTag|s and 20\% faster than the version using the old |MbArray|s. Note that the only difference in the source code between this benchmark and the initial one is that instead of:
+As one can notice, even the new |MbArray| version does not seem to be a lot faster than the |ClassTag| version on this benchmark. However, most of the benchmark \emph{do} show better numbers for the new |MbArray| version. For example, another benchmark was developped, which results can be seen in table \ref{table:OtherCTvsMB}, which shows that the version using new |MbArray|s can be approximately 250\% faster than the version using |ClassTag|s and 20\% faster than the version using the old |MbArray|s. Note that the only difference in the source code between this benchmark and the initial one is that instead of:
 
 \begin{lstlisting-nobreak}
   using(bufs) setUp {
@@ -128,7 +128,7 @@ It is doing :
 
 Also, figure \ref{fig:OtherGcComp}, which corresponds to a handmade version of this new benchmark, shows how the version using new |MbArray|s spends approximately $650\%$ less time collecting garbage.
  
-It is also worth noting that the overall speed factor increases at the advantage of the new |MbArray|s when less memory is assigned to the JVM. For example, running the benchmark on a JVM which disposes of less than 400MB completely crashes the version using the old |MbArray|s by throwing an |OutOfMemory| exception. When the amount of memory assigned is between 400MB and 512MB, the old |MbArray| version runs but performs really bad compared to the two other versions, spending a considerable amount of time in the GC. Finally, when more than 512MB is assigned, we obtain the numbers that have been shown so far (Tables \ref{table:NewCTvsMB} and \ref{table:OtherCTvsMB} as well as figures \ref{fig:NewGcComp} and \ref{fig:OtherGcComp}), since each of these benchmarks have been ran on a JVM to which was assigned 2GB.
+It is also worth noting that the overall speed factor increases at the advantage of the new |MbArray|s when less memory is assigned to the JVM. For example, running the benchmark on a JVM which has less than 400MB completely crashes the version using the old |MbArray|s by throwing an |OutOfMemory| exception. When the amount of memory assigned is between 400MB and 512MB, the old |MbArray| version runs but performs really bad compared to the two other versions, spending a considerable amount of time in the GC. Finally, when more than 512MB is assigned, we obtain the numbers that have been shown so far (Tables \ref{table:NewCTvsMB} and \ref{table:OtherCTvsMB} as well as figures \ref{fig:NewGcComp} and \ref{fig:OtherGcComp}), since each of these benchmarks have been ran on a JVM to which was assigned 2GB.
 
 \subsection{Conclusion}
 
