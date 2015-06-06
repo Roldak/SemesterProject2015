@@ -12,13 +12,11 @@ In the class declaration: %|@miniboxed| annotations and |ClassTag| bounds,
 \begin{lstlisting-nobreak}
 // The MbArray version
 
-import MbArray._
 class ArrayBuffer[@miniboxed T](var _size: Int) 
 	extends ...
 
 // The ClassTag version
 
-import scala.reflect._
 class ArrayBuffer[T: ClassTag](var _size: Int)   
 	extends ...
 \end{lstlisting-nobreak}

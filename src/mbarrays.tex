@@ -235,7 +235,7 @@ Therefore, while specialization does reduce the overhead of acessing primitive a
 \vspace{-1em}
 
 % a natural question: can we combine the three approaches before to get something working?
-\subsection{Miniboxed arrays.} 
+\section{Miniboxed arrays.} 
 
 Would it be possible to combine the three approaches seen so far to produce an alternative |Array| which does not have any of the disadvantages? In this subsection we present how |MbArray| achieves this, keeping the main advantages of each approach and dropping their disadvantages.
 
@@ -255,9 +255,50 @@ Would it be possible to combine the three approaches seen so far to produce an a
 %    solution: optimistically assume the MbArray object contains the specialized array. If so => fast path, if not => slow path
 
 
-|MbArray| is a generic class that wraps a Scala |Array| but is also able to guarantee it does not escape, thus being similar to the ``Breaking the invariant'' approach. This allows programmers to instantiate |MbArray| objects without the need for a |ClassTag| object. It may seem this path will lead to boxing values in the array, but this is not the case: thanks to the tight integration with miniboxing, the |MbArray| class can reflectively decide what array to instantiate: either an array of objects or an array of long integers (the storage type). Therefore, the underlying array does not box the elements.
+|MbArray| is a generic class that wraps a Scala |Array| but is also able to guarantee it does not escape, thus being similar to the ``Breaking the invariant'' approach. This allows programmers to instantiate |MbArray| objects without the need for a |ClassTag| object. It may seem this path will lead to boxing values in the array, but this is not the case: thanks to the tight integration with miniboxing, the |MbArray| class can reflectively decide what array to instantiate: either an array of objects or a specialized variant containing miniboxed values. Therefore, the underlying array does not box the elements.
 
-Finally, capitalizing on the tight integration with miniboxing, the array access procedures are transformed to optimistically access the underlying array directly, obtaining the miniboxed value right away. This is an opportunistic approach: there is a fast-path, when the storage type of the miniboxed class and the |MbArray| object coincide, or a slow path, when they don't. But, thanks to the guidance from the performance advisories, the latter case only occurs with the programmer's consent, who knowingly allows the program to take the slow path.
+\subsection{MbArray's Underlying Assumptions}
+
+The |MbArray| class is implemented with several design decisions in mind: 
+
+\begin{enumerate}
+  \item Instead of using |ClassTag|s, use the miniboxed status to decide which version of the array to create.
+  \item Wrap the array inside an object which doesn't allow it to escape, so that any inconsistent decision can't be observred from the outside.
+  \item Inside the array, use the miniboxed representation (|Long| or |Double|) instead of the unboxed representation, as this side-steps the need for the tag-based dispatch and the primitive conversion.
+\end{enumerate}
+
+\subsection{MbArray Implementation}
+
+This subsection will give an insight into the implementation of |MbArray|s.
+
+\textbf{Instantiation.} An |MbArray| object is instantiated either by cloning an already existing |MbArray| object through the |clone| method, or by creating an empty array of a given size this way:
+
+\begin{lstlisting-nobreak}
+val ary = MbArray.empty[Int](3)
+\end{lstlisting-nobreak}
+
+At compile time, when the miniboxing transformation operates, every |MbArray| instantiation is rewired to one the specialized constructors: |mbArray_empty_L|, |mbArray_empty_J| or \linebreak|mbArray_empty_D|, which will instantiate the specialized variants of the |MbArray|: 
+\begin{compactitem}
+  \item |MbArray_L| for object references;
+  \item |MbArray_J| for integral types;
+  \item |MbArray_D| for floating point types;
+\end{compactitem}
+
+Of course, the instantiation will get rewired to an optimized constructor if and only if the instantiation is monomorphic or occurs in a miniboxed context. For example, the instantiation from the code snippet above will be transformed to:
+
+\begin{lstlisting-nobreak}
+val ary = mbArray_empty_J(3, MiniboxingConstants.INT)
+\end{lstlisting-nobreak}
+
+On the other hand the following code cannot be rewired to a specialized constructor, since the instantiation occurs in a generic context that is not miniboxed:
+
+\begin{lstlisting-nobreak}
+def makeArray[T] = MbArray.empty[T](3) // will instantiate the generic MbArray where primitives are boxed
+\end{lstlisting-nobreak}
+
+This can be solved by annotating the type parameter |T| with the |@miniboxed| annotation.
+
+\textbf{Access.} Capitalizing on the tight integration with miniboxing, the array access procedures are transformed in a very similar fashion to optimistically access the underlying array directly, obtaining the miniboxed value right away. This is an opportunistic approach: there is a fast-path, when the storage type of the miniboxed class and the |MbArray| object coincide, or a slow path, when they don't. But, thanks to the guidance from the performance advisories \footnote{Compiler warnings triggered by the miniboxing plugin when it detects suboptimal code}, the latter case only occurs with the programmer's consent, who knowingly allows the program to take the slow path.
 
 With this approach, the following code:
 
@@ -272,7 +313,7 @@ Is translated to:
    minibox2int(mbArray_apply_J(a, 0))
 \end{lstlisting-nobreak}
 
-Where the |mbArray_apply| method contains the optimistic assumption that the |MbArray| is going to contain the miniboxed version of the |MbArray| class, containing an underlying array of long integers:
+Where the |mbArray_apply_J| method contains the optimistic assumption that the |MbArray| is going to be the specialized version of the |MbArray| class, containing an underlying array of long integers:
 
 \begin{lstlisting-nobreak}
  def mbArray_apply_J[T](T_Type: Byte, a: MbArray[T], idx: Int): Long =
@@ -282,7 +323,9 @@ Where the |mbArray_apply| method contains the optimistic assumption that the |Mb
    }
 \end{lstlisting-nobreak}
 
-In this case, going through the fast path does not require boxing but only a conversion from the miniboxed encoding to the unboxed integer. On the other hand, the slow path accesses an array of objects and transforms the boxed value into a miniboxed one, paying the cost of handling the boxed value.
+In this case, going through the fast path does not require boxing but only a conversion from the miniboxed encoding to the unboxed integer: |x.apply_J(idx)| directly retrieves the miniboxed value from the underlying |Array[Long]|. On the other hand, the slow path accesses an array of objects and transforms the boxed value into a miniboxed one, paying the cost of handling the boxed value.
+
+\subsection{Conclusion}
 
 % Coupled whith performance advisiories, we can direct the programmer away from the slow path => only going on the fast path :)
 
