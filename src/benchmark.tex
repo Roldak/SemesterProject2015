@@ -72,7 +72,7 @@ def append(elem: T) = {
 }
 \end{lstlisting-nobreak}
 
-In the code snipper above, |_size| represents the actual number of elements that the |ArrayBuffer| contains, and |_capacity| the maximum number of elements that the |ArrayBuffer| can contain before having to resize itself.
+In the code snippet above, |_size| represents the actual number of elements that the |ArrayBuffer| contains, and |_capacity| the maximum number of elements that the |ArrayBuffer| can contain before having to resize itself.
  %To this end, the |ArrayBuffer| needs to keep track of the real number of elements that it contains, because it does not correspond to the size of the underlying array anymore. 
  
 \textbf{Iterable}. Iterating over the entire collection is an operation that is recurrent in algorithms. These algorithms often want to make abstraction of the collection type that is used and only want to express their need to traverse it. |Iterable| is a common interface which is implemented by every collection that supports complete traversal. It requires its implementations to provide access to an |Iterator|, which will itself be used to iterate through the collection. To achieve this, the |ArrayBuffer| implements the |Iterable[T]| interface presented below:

@@ -53,7 +53,7 @@ object Benchmark {
   }
 }
 \end{lstlisting-nobreak}
-\caption{Handmade benchmark implementation. The benchmark is done on an ArrayBuffer of 10M elements}
+\caption{Handmade implementation of the initial benchmark. The benchmark is done on an ArrayBuffer of 10M elements}
 \label{fig:HandMadeBench}
 \end{figure}
 
@@ -62,21 +62,23 @@ First of all, I tried to tweak the parameters of the benchmark to try deducing t
 \begin{figure}[!h]
 \subfigure[ClassTag version]{
 	\lstinputlisting{BenchmarkOutputs/CtVector1.txt}
+	\label{subfig:GcCompCT}
 }
 \subfigure[Miniboxed version]{
 	\lstinputlisting{BenchmarkOutputs/MbVector1.txt}
+	\label{subfig:GcCompMB}
 }
-\caption{Benchmark outputs for ArrayBuffers of 10'000'000 elements}
+\caption{The initial benchmark's outputs for ArrayBuffers of 10'000'000 elements}
 \label{fig:GcComp}
 \end{figure}
 
-It is important to note that in the printouts above, the GC cycles that are printed after the end of an iteration and the start of a new one are triggered manually by a |System.gc()| and are therefore not counted in the duration of an iteration. 
+It is important to note that in the printouts above, the GC cycles that are printed after the end of an iteration and the start of a new one are triggered manually by a |System.gc()| and are not counted in the time duration of an iteration. 
 
-Thus, we can infer the following:
+We can thus infer the following:
 
 \begin{itemize}
   \item The |ClassTag| version spends no time collecting garbage during the iteration, but collects 330MB in 242ms at the end of it.
-  \item The |MbArray| version spends up to 196ms collecting 330MB of garbage during the iteration, and collects 330 additional Megabytes at the end of the iteration during 1090ms. 
+  \item The |MbArray| version spends up to 196ms collecting 330MB of garbage during the iteration, and collects 330 additional Megabytes at the end of the iteration in 1090ms. 
 \end{itemize}
 
 Note that the benchmarks were executed enough times to trigger:
@@ -99,18 +101,18 @@ At first, it seemed like a good idea to have only these two specialized versions
 
 \textbf{Back-of-the-enveloppe Calculation.} However, the GC printouts from figure \ref{fig:GcComp} show that using the miniboxed representations internally causes significantly more memory to be used when storing integers. In order to confirm the nature of the additionnal memory usage, we did the following calculation:
 
-First, the total number of elements stored can be computed as follows:
+First, the total number of elements stored for each benchmark iteration can be computed as follows:
 \begin{enumerate}
   \item The initial array is 10M elements large.
-  \item In the |init| function, we build another |ArrayBuffer| from the initial one through mapping, which size grows up to 16M elements due to the growth strategy employed.
-  \item Inside the benchmark code, we are mapping one more time, thus building another 16M elements |ArrayBuffer|
-  \item In total, we are storing 74M elements.
+  \item In the |init| function, we build another |ArrayBuffer| from the initial one through mapping, which produces intermediate |ArrayBuffer|s of 1, 2, \ldots 8M and finally 16M elements due to the growth strategy employed, summing up to a total of 32M elements.
+  \item Inside the benchmark code, we are mapping one more time, thus adding another 32M elements |ArrayBuffer|
+  \item In total, we are storing 74M elements per iteration.
 \end{enumerate}
 
 We can now separate the calculation for the two versions:
 \begin{itemize}
-	\item For the |ClassTag| version, the elements stored are integers. Therefore, since an integer is 4 bytes long, we are holding $74$M$ \times 4$B$ = 296$MB. Since we can safely consider a 30MB overhead, we attain the correct number: 330MB.
-	\item For the |MbArray| version however, elements stored are not integers but longs. Since a long is 8 bytes long, we are holding $74$M$ \times 8$B$ = 592$MB. Moreover, the miniboxing plugin introduces an extra overhead on top of the 30MB due to having miniboxed values of 64bits and type tags being passed around a lot, but also due to miniboxed functions taking twice as much memory. We can thus safely assume an extra 30MB overhead on top of the default 30MB, giving us the expected amount of memory being used: 660MB. 
+	\item For the |ClassTag| version, the elements stored are integers. Therefore, since an integer is 4 bytes long, we are holding 74M $\times$ 4B $=$ 296MB. Since we can safely consider a 30MB overhead, we attain the same number that we find in practice in figure \ref{subfig:GcCompCT}: 330MB.
+	\item For the |MbArray| version however, elements stored are not integers but longs. Since a long is 8 bytes long, we are holding 74M $\times$ 8B $=$ 592MB. Moreover, the miniboxing plugin introduces an extra overhead on top of the 30MB due to having miniboxed values of 64bits and type tags being passed around a lot, but also due to miniboxed functions taking twice as much memory. We can thus safely assume a 60MB overhead, giving us the amount of memory that we find in practice in figure \ref{subfig:GcCompMB}: 660MB. 
 \end{itemize}
 
 Hence we can observe that for integers, the |MbArary| version of the |ArrayBuffer| uses twice as much memory as the |ClassTag| version. Even worse, for booleans, which only need one bit, storing values in the long representation causes the heap fooprint to increase 64 times. In turn, this leads to more GC cycles, which slow down the program execution.

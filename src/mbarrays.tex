@@ -281,7 +281,7 @@ This subsection will give an insight into the implementation of |MbArray|s.
 val ary = MbArray.empty[Int](3)
 \end{lstlisting-nobreak}
 
-At compile time, when the miniboxing transformation operates, every |MbArray| instantiation is rewired to one the specialized constructors: |mbArray_empty_L|, |mbArray_empty_J| or \linebreak|mbArray_empty_D|, which will instantiate the specialized variants of the |MbArray|: 
+At compile time, when the miniboxing transformation operates, every |MbArray| instantiation is rewired to one of the specialized constructors: |mbArray_empty_L|, |mbArray_empty_J| or \linebreak|mbArray_empty_D|, which will instantiate the specialized variants of the |MbArray|: 
 \begin{compactitem}
   \item |MbArray_L| for object references;
   \item |MbArray_J| for integral types;
