@@ -25,13 +25,18 @@ In figure \ref{fig:GcComp}, we can see that during one iteration of the benchmar
   \item The |MbArray| version spends up to |~145ms| collecting garbage. 
 \end{itemize} 
 
+\vfill
+
 \subsection{Problem with the Current Design}
 
-In order to understand the cause of the slowdown, it is necessary understand of how |MbArray|s are currently transformed by the miniboxing plugin.
+In order to understand the cause of the slowdown, it is necessary recall how |MbArray|s are currently transformed by the miniboxing plugin. Indeed, the third assumption -- which was presented in section \ref{subsec:assumptions} -- states:
+\begin{quote}
+\textit{Inside the array, use the miniboxed representation (Long or Double) instead of the unboxed representation, as this side-steps the need for the tag-based dispatch and the primitive conversion.}
+\end{quote}
+When an |MbArray| is instantiated in a context where its type argument is known to be a primitive type, the miniboxing plugin transforms at compile time the instantiation of the generic |MbArray| into one of its specialized version: |MbArray_J| for an integral type, or |MbArray_D| for a floating point type.
+At first, it seemed like a good idea to have only these two specialized versions since intenally, the miniboxing plugin only deals with three representations: |Object|, |long| and |double|. Indeed, storing the values as their miniboxed representation avoids the array type dispatch and coercion costs that would occur in the access procedures if they were stored as their true representation. 
 
-When an |MbArray| is instantiated in a context where its type argument is known to be a primitive type, which can only happen when the instantiation is monomorphic or occurs in a miniboxed generic context, the miniboxing plugin will at compile time transform the instantiation of the generic |MbArray| into one of its specialized version: |MbArray_J| for an integral type, or |MbArray_D| for a floating point type.
-At first, it seemed like a good idea to have only these two specialized versions: since the miniboxing plugin only deals with two specialized accessors anyway -- |MbArray_apply_J| and |MbArray_apply_D| -- we cannot gain any performance (in term of number of instruction executed) by adding other versions, since their values would have to get coerced into their respective miniboxed representation, |Long| or |Int|, in order get returned by |MbArray_apply_J| or |MbArray_apply_D|.  
-Well, it turns out that this is actually a problem, and having only two variants \emph{does} affect performance. Except, it is not about number of instructions executed, but the memory footprint left by the program. Indeed, having only |MbArray_J| to store values of integral type runs great while the actual data type is |Long|. However, it will use 2 times the memory needed to store |Int|s, and will use up to 64 times the memory needed to store |Boolean|s. Not only is this not acceptable in terms of memory consumption, but this also affects runtime performance by triggering more GC cycles and thus increasing the total time spent in collecting garbage as it has been shown above.
+However, the GC printouts from figure \ref{fig:GcComp} show that using the miniboxed representations internally causes significantly more memory to be used when storing integers, up to twice the memory used by raw arrays. Even worse, for booleans, which only need one bit, storing values in the long representation causes the heap fooprint to increase 64 times. In turn, this leads to more GC cycles, which slow down the program execution.
 
 %Now what remains to be done before being able to fix the issue is to explain how the difference in GC time could be so important:
 %The first things that stands out is how memory consumption for the |MbArray| version gets up to $800MB$, whereas the |ClassTag| version only reaches $600MB$.

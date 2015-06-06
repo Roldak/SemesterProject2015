@@ -132,7 +132,7 @@ It is doing :
 
 Also, figure \ref{fig:OtherGcComp}, which corresponds to a handmade version of this new benchmark, shows how the version using new |MbArray|s spends approximately $650\%$ less time collecting garbage.
 
-\textbf{Mapping to Longss and Doubles.} There is another case which needs to be benchmarked, corresponding to the best case scenario for old |MbArray|s: mapping to |Long|s and |Double|s. The reason it is the best scenario is that it is the one in which no extra space is wasted by the old |MbArray| implementation. Here is the benchmark code:
+\textbf{Mapping to Longs and Doubles.} There is another case which needs to be benchmarked, corresponding to the best case scenario for old |MbArray|s: mapping to |Long|s and |Double|s. The reason it is the best scenario is that it is the one in which no extra space is wasted by the old |MbArray| implementation. Here is the benchmark code:
 
 \begin{lstlisting-nobreak}
   using(bufs) setUp {
@@ -152,7 +152,7 @@ It is also worth noting that the overall speed factor increases at the advantage
 
 \subsection{Conclusion}
 
-In every cases, the version using new |MbArray|s is either faster (tables \ref{table:NewCTvsMB} or \ref{table:OtherCTvsMB}) than or as fast as (table \ref{table:WorstCTvsMB}) the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{table:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, benchmark \ref{table:OtherCTvsMB} being a good example of this. 
+In every cases, the version using new |MbArray|s is either faster (tables \ref{table:NewCTvsMB} or \ref{table:OtherCTvsMB}) than or as fast (table \ref{table:WorstCTvsMB}) as the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{table:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, benchmark \ref{table:OtherCTvsMB} being a good example of this. 
 
 \input{BenchmarkOutputs/OtherBenchSM.tex}
 
@@ -169,3 +169,5 @@ In every cases, the version using new |MbArray|s is either faster (tables \ref{t
 \caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements with mappings to Floats}
 \label{fig:OtherGcComp}
 \end{figure}
+
+\input{BenchmarkOutputs/WorstBenchSM.tex}
