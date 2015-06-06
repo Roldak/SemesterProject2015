@@ -255,7 +255,7 @@ Would it be possible to combine the three approaches seen so far to produce an a
 %    solution: optimistically assume the MbArray object contains the specialized array. If so => fast path, if not => slow path
 
 
-|MbArray| is a generic class that wraps a Scala |Array| but is also able to guarantee it does not escape, thus being similar to the ``Breaking the invariant'' approach. This allows programmers to instantiate |MbArray| objects without the need for a |ClassTag| object. It may seem this path will lead to boxing values in the array, but this is not the case: thanks to the tight integration with miniboxing, the |MbArray| class can reflectively decide what array to instantiate: either an array of objects or a specialized variant containing miniboxed values. Therefore, the underlying array does not box the elements.
+|MbArray| is a generic class that wraps a Scala |Array| but is also able to guarantee it does not escape, thus being similar to the ``Breaking the invariant'' approach. This allows programmers to instantiate |MbArray| objects without the need for a |ClassTag| object. It may seem this path will lead to boxing values in the array, but this is not the case: thanks to the tight integration with miniboxing, the |MbArray| class can reflectively decide what array to instantiate: either an array of objects or a specialized variant containing miniboxed values. Therefore, the underlying array does not box the elements unless the type argument is erased at the instantiation site.
 
 \subsection{MbArray's Underlying Assumptions}
 \label{subsec:assumptions}
@@ -264,11 +264,14 @@ The |MbArray| class is implemented with several design decisions in mind:
 
 \begin{enumerate}
   \item Instead of using |ClassTag|s, use the miniboxed status to decide which version of the array to create.
-  \item Wrap the array inside an object which doesn't allow it to escape, so that any inconsistent decision can't be observred from the outside.
-  \item Inside the array, use the miniboxed representation (|Long| or |Double|) instead of the unboxed representation, as this side-steps the need for the tag-based dispatch and the primitive conversion.
+  \item Wrap the array inside an object which doesn't allow it to escape, so that any inconsistent decision can't be observed from the outside.
+  \item Inside the array, use the miniboxed representation (|long| or |double|) instead of the unboxed representation, as this side-steps the need for the tag-based dispatch and the primitive conversion in the access procedures.
 \end{enumerate}
 
+The last point is explained in the next subsection.
+
 \subsection{MbArray Implementation}
+\label{subsec:mbarrayimpl}
 
 This subsection will give an insight into the implementation of |MbArray|s.
 
@@ -324,7 +327,11 @@ Where the |mbArray_apply_J| method contains the optimistic assumption that the |
    }
 \end{lstlisting-nobreak}
 
-In this case, going through the fast path does not require boxing but only a conversion from the miniboxed encoding to the unboxed integer: |x.apply_J(idx)| directly retrieves the miniboxed value from the underlying |Array[Long]|. On the other hand, the slow path accesses an array of objects and transforms the boxed value into a miniboxed one, paying the cost of handling the boxed value.
+There are two possibilities:
+\begin{itemize}
+  \item Going through the fast path does not require boxing but only a conversion from the miniboxed encoding to the unboxed integer: |x.apply_J(idx)| directly retrieves the miniboxed value from the underlying |Array[Long]|. This explains the third assumption presented in subsection \ref{subsec:assumptions}: since the value is already in its miniboxed representation inside the storage, there is no need to match over the type of the underlying array and to convert the primitive value.
+  \item On the other hand, the slow path accesses an array of objects and transforms the boxed value into a miniboxed one, paying the cost of handling the boxed value.
+\end{itemize} 
 
 \subsection{Conclusion}
 

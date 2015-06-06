@@ -1,6 +1,11 @@
-[GC (Allocation Failure)  266978K->98922K(987648K), 0.0057464 secs]
-[GC (Allocation Failure)  333418K->143986K(991232K), 0.0126919 secs]
-[GC (Allocation Failure)  378482K->230010K(989184K), 0.0143148 secs]
-[GC (Allocation Failure)  451384K->213634K(992256K), 0.0030312 secs]
-[GC (Allocation Failure)  450178K->295562K(989696K), 0.0139287 secs]
-	9. : 578ms (GC : 48ms)
+    12. : 176ms
+[GC 328350K->659K(2009792K), 0.0973560 secs]
+[Full GC 659K->659K(2009792K), 0.1256140 secs]
+--- next iteration
+    13. : 171ms
+[GC 328351K->659K(2009792K), 0.0933540 secs] 
+[Full GC 659K->659K(2009792K), 0.1280840 secs] 
+--- next iteration
+    14. : 169ms
+[GC 328343K->659K(2009792K), 0.0974840 secs]
+[Full GC 659K->659K(2009792K), 0.1259070 secs]

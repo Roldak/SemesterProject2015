@@ -11,12 +11,10 @@ In the class declaration: %|@miniboxed| annotations and |ClassTag| bounds,
   
 \begin{lstlisting-nobreak}
 // The MbArray version
-
 class ArrayBuffer[@miniboxed T](var _size: Int) 
 	extends ...
 
 // The ClassTag version
-
 class ArrayBuffer[T: ClassTag](var _size: Int)   
 	extends ...
 \end{lstlisting-nobreak}
@@ -25,17 +23,13 @@ And where arrays are instantiated:
 
 \begin{lstlisting-nobreak}
 // The MbArray version
-	...
 	_array = MbArray.empty[T](_capacity)
-	...
 
 // The ClassTag version
-	...
 	_array = new Array[T](_capacity)
-	...
 \end{lstlisting-nobreak}
 
-\subsection{High-level Overview}
+\subsection{High-level Overview of the ArrayBuffer}
 
 Quoting the official Scala documentation, an |ArrayBuffer| is: 
 \begin{quote}
@@ -101,7 +95,7 @@ trait Iterator[@miniboxed T] {
 }
 \end{lstlisting-nobreak}
 
-\textbf{Buildable}. Occasionnally, algorithms also want to express their need to build a new collection based on an existing one. In the Scala Standard Library, this feature is exposed through the |CanBuildFrom| mechanism. 
+\textbf{Buildable}. Occasionnally, algorithms also want to express their need to build a new collection based on an existing one. In the Scala Standard Library, this feature is exposed through the |CanBuildFrom| mechanism \cite{adriaan-moors-thesis}. 
 %The advantage of this method is that it can build a collection that is adapted to the context: mapping a |BitSet| over a function returning |Float|s will produce a |Set| and not a |BitSet| -- which is exactly what we want -- because the Scala compiler will not find any way to construct a |BitSet| with |Float| values. 
 Here, I decided to simplify (but not too much) the design by proposing an interface which only allows building the same type of collection. That is, a |Collection[T]| can only build |Collection[U]|. Thanks to Scala's ability to abstract over type constructor, the interface could be implemented in a straightforward manner: 
 
@@ -177,7 +171,7 @@ object MbVectorBenchmark extends PerformanceTest.Quickbenchmark {
           b.map(_ + 1)
           b.map(_ + 2)
       } in {
-        b => b.map(_ + 1).map(_ + 2).map(_ + 3)
+        b => b.map(_ + 1)
       }
     }
   }

@@ -8,6 +8,8 @@ After having exposed the flow in the current |MbArray| design that slows down it
 The goal is to keep the mechanisms in |MbArray|s that are working, but to decrease the memory needed for that.
 To this end, the design change I opted for was adding more specializations to the |MbArray|s: one for each primitive type that exists in Scala. In other words, an |MbArray[Boolean]| would get transformed to |MbArray_B| which uses a |boolean[]| internally instead of the prevous |long[]|, and so on equivalently for every of the 10 primitive types that exist in Scala. Hopefully, this would result in less heap memory wasted and therefore a higher GC throughput.
 
+\input{BenchmarkOutputs/NewBenchSM.tex}
+
 \subsection{Design transformation}
 
 Adding the 7 other specializations was fairly straightforward: All that had to be done was duplicating one of the two existing specialization for every new variants and changing the internal array type |Array[Long]| to the ones adapted for the different specialization.
@@ -88,8 +90,6 @@ Following the transformation, we re-benchmarked out example programs using the n
  
 \textbf{Initial benchmark.} Table \ref{table:NewCTvsMB} shows that the new version performs approximately at the same level as the |ClassTag| version on this benchmark. Moreover, figure \ref{fig:NewGcComp} shows how the new version spends 3$\times$ less time collecting garbage than the old version, from which follows a 100ms runtime performance gain. One can note that one top of the gain coming from the reduced amount of time spent collecting garbage, the new version gets a boost of 70ms from the fact that less memory is used, thus reducing the amount of memory that needs to be read. In average, the new version is 25\% faster than the old version in this benchmark.
 
-\input{BenchmarkOutputs/NewBenchSM.tex}
-
 \begin{figure}
 \subfigure[ClassTag version]{
 	\lstinputlisting{BenchmarkOutputs/CtVector1.txt}
@@ -114,7 +114,7 @@ As one can notice, even the new |MbArray| version does not seem to be a lot fast
       b.map(_ + 1)
       b.map(_ + 2)
   } in {
-    b => b.map(_ + 1).map(_ + 2).map(_ + 3)
+    b => b.map(_ + 1)
   }
 \end{lstlisting-nobreak}
 
@@ -132,6 +132,22 @@ It is doing :
 
 Also, figure \ref{fig:OtherGcComp}, which corresponds to a handmade version of this new benchmark, shows how the version using new |MbArray|s spends approximately $650\%$ less time collecting garbage.
 
+\input{BenchmarkOutputs/OtherBenchSM.tex}
+
+\begin{figure}
+\subfigure[ClassTag version]{
+	\lstinputlisting{BenchmarkOutputs/CtVector3.txt}
+}
+\subfigure[Old Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/MbVector3.txt}
+}
+\subfigure[New Miniboxed version]{
+	\lstinputlisting{BenchmarkOutputs/NewMbVector3.txt}
+}
+\caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements with mappings to Floats}
+\label{fig:OtherGcComp}
+\end{figure}
+
 \textbf{Mapping to Longs and Doubles.} There is another case which needs to be benchmarked, corresponding to the best case scenario for old |MbArray|s: mapping to |Long|s and |Double|s. The reason it is the best scenario is that it is the one in which no extra space is wasted by the old |MbArray| implementation. Here is the benchmark code:
 
 \begin{lstlisting-nobreak}
@@ -148,26 +164,10 @@ Results for this benchmark can be seen in table \ref{table:WorstCTvsMB}, which s
 
 \subsection{JVM Memory}
 
-It is also worth noting that the overall speed factor increases at the advantage of the new |MbArray|s when less memory is assigned to the JVM. For example, running the benchmark on a JVM which has less than 400MB completely crashes the version using the old |MbArray|s by throwing an |OutOfMemory| exception. When the amount of memory assigned is between 400MB and 512MB, the old |MbArray| version runs but performs really bad compared to the two other versions, spending a considerable amount of time in the GC. Finally, when more than 512MB is assigned, we obtain the numbers that have been shown so far (Tables \ref{table:NewCTvsMB} and \ref{table:OtherCTvsMB} as well as figures \ref{fig:NewGcComp} and \ref{fig:OtherGcComp}), since each of these benchmarks have been ran on a JVM to which was assigned at least 1GB.
+It is also worth noting that the overall speed difference increases at the advantage of the new |MbArray|s when less memory is assigned to the JVM. For example, running the benchmark on a JVM which has less than 400MB completely crashes the version using the old |MbArray|s by throwing an |OutOfMemory| exception. When the amount of memory assigned is between 400MB and 512MB, the old |MbArray| version runs but performs really bad compared to the two other versions, spending a considerable amount of time in the GC. Finally, when more than 512MB is assigned, we obtain the numbers that have been shown so far (Tables \ref{table:NewCTvsMB} and \ref{table:OtherCTvsMB} as well as figures \ref{fig:NewGcComp} and \ref{fig:OtherGcComp}), since each of these benchmarks have been ran on a JVM to which was assigned at least 1GB.
 
 \subsection{Conclusion}
 
-In every cases, the version using new |MbArray|s is either faster (tables \ref{table:NewCTvsMB} or \ref{table:OtherCTvsMB}) than or as fast (table \ref{table:WorstCTvsMB}) as the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{table:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, benchmark \ref{table:OtherCTvsMB} being a good example of this. 
-
-\input{BenchmarkOutputs/OtherBenchSM.tex}
-
-\begin{figure}
-\subfigure[ClassTag version]{
-	\lstinputlisting{BenchmarkOutputs/CtVector3.txt}
-}
-\subfigure[Old Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/MbVector3.txt}
-}
-\subfigure[New Miniboxed version]{
-	\lstinputlisting{BenchmarkOutputs/NewMbVector3.txt}
-}
-\caption{New benchmark outputs for ArrayBuffers of 10'000'000 elements with mappings to Floats}
-\label{fig:OtherGcComp}
-\end{figure}
+In every cases, the version using new |MbArray|s is either faster (tables \ref{table:NewCTvsMB} or \ref{table:OtherCTvsMB}) than or as fast (table \ref{table:WorstCTvsMB}) as the version using old |MbArray|s. Futhermore, although it is in some cases running as equivalently fast as the |ClassTag| version -- as shows benchmark \ref{table:NewCTvsMB} --, it is actually in most cases faster than the |ClassTag| version, tables \ref{table:OtherCTvsMB} and \ref{table:WorstCTvsMB} being a good example of this. 
 
 \input{BenchmarkOutputs/WorstBenchSM.tex}

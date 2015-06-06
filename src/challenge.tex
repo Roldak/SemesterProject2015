@@ -3,12 +3,63 @@
 
 In this section, I describe the steps that I followed in order to debug the slowdown observed in the last section, that is, to identify its cause.
 
-\subsection{Interpretation of the Numbers}
-
-First of all, I tried to tweak the parameters of the benchmark to try deducing the cause of the slowdowns. As one could expect, modifying basic items such as the size of the |ArrayBuffer|s did not improve the numbers. Ultimately, I had to dig deeper into what could cause the problem, and to this end rewrote the benchmarking process by hand so that it would be easier to debug and to experiment with the JVM flags. Usually, benchmarking is done through a dedicated framework, such as ScalaMeter, but in this particular case I needed to isolate the benchmark and be able to run it directly. Thinking back about the original problem, one of the cause for the slowdown could have been that hot methods would not get inlined properly. Indeed, the miniboxing transformation generally produces methods that are larger than their generic counterparts, which can prevent inlining. This can be easily detected with a debug build of the HotSpot virtual machine and the |-XX:+PrintCompilation| flag. Unfortunately it did not pay off. Another direction was to obtain a breakdown of the time spent computing and collecting garbage. Indeed, running the benchmark once more with the |-XX:+PrintGC| option yielded a more interesting result: the version using |MbArray|s would spend way more time collecting garbage than the version using |ClassTag|s:
+\subsection{Analyzing of the Numbers}
 
 \begin{figure}
-\centering
+\begin{lstlisting-nobreak}
+object Benchmark {
+
+  def vecSize = 10000000
+  def opCount = 20
+
+  def makeBuffer(size: Int, fill: Int => Int) = {
+    val vec = new ArrayBuffer[Int](size)
+    vec.map(fill)
+  }
+
+  def time(opName: String, count: Int, init: => ArrayBuffer[Int], operation: ArrayBuffer[Int] => Unit) = {
+    var i = 1
+    var total = 0L
+
+    println("ArrayBuffer. " + opName + " : ")
+
+    while (i <= count) {
+      var vec = init
+
+      println("--- next iteration")
+      val start = System.currentTimeMillis()
+      operation(vec)
+      val end = System.currentTimeMillis()
+      println("\t" + i + ". : " + (end - start) + "ms");
+
+      vec = null
+      System.gc()
+
+      total += end - start
+      i += 1
+    }
+
+    println("Total : " + total + "ms. Average " + (total.toDouble / count) + ".\n")
+  }
+
+  def main(args: Array[String]) = {
+
+    time("map", opCount, {
+      makeBuffer(vecSize, i => 1)
+    }, {
+      _.map { _ * 2 }
+    })
+
+  }
+}
+\end{lstlisting-nobreak}
+\caption{Handmade benchmark implementation. The benchmark is done on an ArrayBuffer of 10M elements}
+\label{fig:HandMadeBench}
+\end{figure}
+
+First of all, I tried to tweak the parameters of the benchmark to try deducing the cause of the slowdowns. As one could expect, modifying basic items such as the size of the |ArrayBuffer|s did not improve the numbers. Ultimately, I had to dig deeper into what could cause the problem, and to this end rewrote the benchmarking process by hand so that it would be easier to debug and to experiment with the JVM flags. Usually, benchmarking is done through a dedicated framework, such as ScalaMeter, but in this particular case I needed to isolate the benchmark and be able to run it directly. The handmade benchmark implementation can be found in figure \ref{fig:HandMadeBench}. Thinking back about the original problem, one of the cause for the slowdown could have been that hot methods would not get inlined properly. Indeed, the miniboxing transformation generally produces methods that are larger than their generic counterparts, which can prevent inlining. This can be easily detected with a debug build of the HotSpot virtual machine and the |-XX:+PrintCompilation| flag. Unfortunately it did not pay off, as everything was inlined as expected. Another direction was to obtain a breakdown of the time spent computing and collecting garbage. Indeed, running the benchmark once more with the |-XX:+PrintGC| option yielded a more interesting result: in the version using |MbArray|s a GC cycle gets triggered \emph{during} the benchmark iteration, whereas none happen for the |ClassTag| version:
+
+\begin{figure}[!h]
 \subfigure[ClassTag version]{
 	\lstinputlisting{BenchmarkOutputs/CtVector1.txt}
 }
@@ -19,24 +70,50 @@ First of all, I tried to tweak the parameters of the benchmark to try deducing t
 \label{fig:GcComp}
 \end{figure}
 
-In figure \ref{fig:GcComp}, we can see that during one iteration of the benchmark:
-\begin{itemize}
-  \item The |ClassTag| version spends only |~66ms| collecting garbage.
-  \item The |MbArray| version spends up to |~145ms| collecting garbage. 
-\end{itemize} 
+It is important to note that in the printouts above, the GC cycles that are printed after the end of an iteration and the start of a new one are triggered manually by a |System.gc()| and are therefore not counted in the duration of an iteration. 
 
-\vfill
+Thus, we can infer the following:
+
+\begin{itemize}
+  \item The |ClassTag| version spends no time collecting garbage during the iteration, but collects 330MB in 242ms at the end of it.
+  \item The |MbArray| version spends up to 196ms collecting 330MB of garbage during the iteration, and collects 330 additional Megabytes at the end of the iteration during 1090ms. 
+\end{itemize}
+
+Note that the benchmarks were executed enough times to trigger:
+\begin{itemize}
+  \item JIT compilation with the server compiler (C2).
+  \item Full inlining of the code being benchmarked, which enabled escape analysis and therefore eliminates boxing even in generic code.
+\end{itemize}
+
+Moreover, through profiling, we made sure no boxed values (|java.lang.Integer|) were created.
+Thus, the only differences in the low-level code are the array accessors: for the |ClassTag| version, the accessors are |ScalaRunTime.array_apply| and |ScalaRunTime.array_update|, while for the |MbArray| version, they are |mbArray_apply_J| presented earlier as well as |mbArray_update_J|.
+
+We can therefore derive that the cause of the slowdown is due to an overly high amount of garbage being produced by the version using |MbArray|s.
 
 \subsection{Problem with the Current Design}
 
-In order to understand the cause of the slowdown, it is necessary recall how |MbArray|s are currently transformed by the miniboxing plugin. Indeed, the third assumption -- which was presented in section \ref{subsec:assumptions} -- states:
-\begin{quote}
-\textit{Inside the array, use the miniboxed representation (Long or Double) instead of the unboxed representation, as this side-steps the need for the tag-based dispatch and the primitive conversion.}
-\end{quote}
-When an |MbArray| is instantiated in a context where its type argument is known to be a primitive type, the miniboxing plugin transforms at compile time the instantiation of the generic |MbArray| into one of its specialized version: |MbArray_J| for an integral type, or |MbArray_D| for a floating point type.
-At first, it seemed like a good idea to have only these two specialized versions since intenally, the miniboxing plugin only deals with three representations: |Object|, |long| and |double|. Indeed, storing the values as their miniboxed representation avoids the array type dispatch and coercion costs that would occur in the access procedures if they were stored as their true representation. 
+In order to understand the cause for the high amount of garbage being produced, it is necessary recall how |MbArray|s are currently transformed by the miniboxing plugin. 
 
-However, the GC printouts from figure \ref{fig:GcComp} show that using the miniboxed representations internally causes significantly more memory to be used when storing integers, up to twice the memory used by raw arrays. Even worse, for booleans, which only need one bit, storing values in the long representation causes the heap fooprint to increase 64 times. In turn, this leads to more GC cycles, which slow down the program execution.
+\textbf{Memorandum.} As explained in subsection \ref{subsec:mbarrayimpl}, when an |MbArray| is instantiated in a context where its type argument is known to be a primitive type, the miniboxing plugin transforms at compile time the instantiation of the generic |MbArray| into one of its specialized version: |MbArray_J| for an integral type, or |MbArray_D| for a floating point type.
+At first, it seemed like a good idea to have only these two specialized versions since internally, the miniboxing plugin only deals with three representations: |Object|, |long| and |double|, and therefore, storing the values as their miniboxed representation avoids the array type dispatch and coercion costs that would occur in the access procedures if they were stored as their true representation. This corresponds to the third assumption presented in subsection \ref{subsec:assumptions}.
+
+\textbf{Back-of-the-enveloppe Calculation.} However, the GC printouts from figure \ref{fig:GcComp} show that using the miniboxed representations internally causes significantly more memory to be used when storing integers. In order to confirm the nature of the additionnal memory usage, we did the following calculation:
+
+First, the total number of elements stored can be computed as follows:
+\begin{enumerate}
+  \item The initial array is 10M elements large.
+  \item In the |init| function, we build another |ArrayBuffer| from the initial one through mapping, which size grows up to 16M elements due to the growth strategy employed.
+  \item Inside the benchmark code, we are mapping one more time, thus building another 16M elements |ArrayBuffer|
+  \item In total, we are storing 74M elements.
+\end{enumerate}
+
+We can now separate the calculation for the two versions:
+\begin{itemize}
+	\item For the |ClassTag| version, the elements stored are integers. Therefore, since an integer is 4 bytes long, we are holding $74$M$ \times 4$B$ = 296$MB. Since we can safely consider a 30MB overhead, we attain the correct number: 330MB.
+	\item For the |MbArray| version however, elements stored are not integers but longs. Since a long is 8 bytes long, we are holding $74$M$ \times 8$B$ = 592$MB. Moreover, the miniboxing plugin introduces an extra overhead on top of the 30MB due to having miniboxed values of 64bits and type tags being passed around a lot, but also due to miniboxed functions taking twice as much memory. We can thus safely assume an extra 30MB overhead on top of the default 30MB, giving us the expected amount of memory being used: 660MB. 
+\end{itemize}
+
+Hence we can observe that for integers, the |MbArary| version of the |ArrayBuffer| uses twice as much memory as the |ClassTag| version. Even worse, for booleans, which only need one bit, storing values in the long representation causes the heap fooprint to increase 64 times. In turn, this leads to more GC cycles, which slow down the program execution.
 
 %Now what remains to be done before being able to fix the issue is to explain how the difference in GC time could be so important:
 %The first things that stands out is how memory consumption for the |MbArray| version gets up to $800MB$, whereas the |ClassTag| version only reaches $600MB$.
