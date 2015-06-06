@@ -1,0 +1,15 @@
+\begin{table}[t]
+  \begin{tabularx}{0.48\textwidth}{|g *{3}{|Y}|} \hline
+    \rowcolor{Gray}
+    \textbf{Size} & \textbf{ClassTag} & \textbf{Old MbArray}& \textbf{New MbArray} \\ \hline
+     300000		&              24.62 ms  &              11.99 ms &             11.24 ms \\
+     600000		&              46.37 ms	 &              22.94 ms &             22.48 ms \\
+     900000     &              57.63 ms  &              28.12 ms &             28.43 ms \\
+    1200000     &              90.35 ms  &              44.57 ms &             43.40 ms \\ 
+    1500000     &              105.27 ms &              49.72 ms &             50.16 ms \\ \hline
+  \end{tabularx}
+  \vspace{-2mm}
+  \caption{Scalameter benchmark outputs. Mapping |ArrayBuffer|s of Long and Doubles.}
+  \label{table:WorstCTvsMB}
+  \vspace{-1em}
+\end{table}
