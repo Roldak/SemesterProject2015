@@ -40,7 +40,7 @@ With this transformation, which is similar to the accessor technique presented a
 
 Another thing to notice is that the |Array[T]| type in the signature of |first| is transformed into |Object|: at the JVM level, primitive arrays such as |int[]|, |float[]| and |Object[]| have a single common parent class, which is |java.lang.Object|. This explains why there is a need to match the primitive array type: the |Array| class offered by Scala does not really exist, it's simply an abstraction over the primitive arrays offered by the JVM.
 
-\subsubsection{Instantiating Arrays}
+\subsection{Instantiating Arrays}
 
 % But this optimization prevents instantiation of arrays in a generic context, because we cannot know at compile time which of int[], double[], Object[], etc we need to allocate.
 Although the array representation invariant looks like a good deal so far, it introduces an unexpected problem: how to instantiate generic arrays? Exactly like accessing or updating an array, instantiating one must abide by the array invariant. Yet, with the erasure transformation, all traces of a generic type parameter |T| are removed, transforming the code:
@@ -235,7 +235,9 @@ Therefore, while specialization does reduce the overhead of acessing primitive a
 \vspace{-1em}
 
 % a natural question: can we combine the three approaches before to get something working?
-\textbf{Miniboxed arrays.} Would it be possible to combine the three approaches seen so far to produce an alternative |Array| which does not have any of the disadvantages? In this subsection we present how |MbArray| achieves this, keeping the main advantages of each approach and dropping their disadvantages.
+\subsection{Miniboxed arrays.} 
+
+Would it be possible to combine the three approaches seen so far to produce an alternative |Array| which does not have any of the disadvantages? In this subsection we present how |MbArray| achieves this, keeping the main advantages of each approach and dropping their disadvantages.
 
 % enter MbArray:
 %  - invariant approach      => advantage:    solves array instantiation problem

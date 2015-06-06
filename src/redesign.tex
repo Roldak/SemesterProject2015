@@ -105,24 +105,24 @@ It is now time to compare the old numbers to the numbers we obtain by running th
 Looking at the initial benchmark, even the new |MbArray| version does not seem to be a lot faster than the |ClassTag| version. However, most of the benchmark \emph{do} show better numbers for the new |MbArray|. For example, another benchmark was developped, which results can be seen in table \ref{table:OtherCTvsMB}, which show that the version using new |MbArray|s can be approximately 250\% faster than the version using |ClassTag|s and 20\% faster than the version using the old |MbArray|s. Note that the only difference in the source code between this benchmark and the initial one is that instead of:
 
 \begin{lstlisting-nobreak}
-  using(vectors) setUp {
-    v => 
-      v.map(_ + 1)
-      v.map(_ + 2)
+  using(bufs) setUp {
+    b => 
+      b.map(_ + 1)
+      b.map(_ + 2)
   } in {
-    v => v.map(_ + 1).map(_ + 2).map(_ + 3)
+    b => b.map(_ + 1).map(_ + 2).map(_ + 3)
   }
 \end{lstlisting-nobreak}
 
 It is doing : 
 
 \begin{lstlisting-nobreak}
-  using(vectors) setUp {
-    v => 
-      v.map(_ + 1)
-      v.map(_ + 2)
+  using(bufs) setUp {
+    b => 
+      b.map(_ + 1)
+      b.map(_ + 2)
   } in {
-    v => v.map(_ + 1).map(_ + 2.5f).map(_ + 3)
+    b => b.map(_ + 1).map(_ + 2.5f).map(_ + 3)
   }
 \end{lstlisting-nobreak}
 

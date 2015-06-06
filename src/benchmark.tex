@@ -50,7 +50,7 @@ On top of this, high-level features are provided with the implementation, such a
 
 In this subsection, I explain how the main features of the\linebreak |ArrayBuffer| are implemented. Note that code snippets are taken from the miniboxed version.
 
-\textbf{Dynamic size}. One of the properties of the |ArrayBuffer| is that it is dynamically resizable, which means it is possible to append elements to it even after it has been instantiated for a given size. For example: 
+\textbf{Dynamic size}. One of the properties of the buffer data structure is that elements can be added at any time, thus requiring the |ArrayBuffer| to dynamically resize itself. For example: 
 
 \begin{lstlisting-nobreak}
 val buf = new ArrayBuffer[Int](2)
@@ -59,11 +59,11 @@ buf(1) = 2
 buf.append(3) // buf now contains {1, 2, 3}
 \end{lstlisting-nobreak}
 
-However, this feature is not proposed by default by the underlying array -- neither |Array| nor |MbArray| implements it. One way to implement this feature is to naively re-instantiate the underlying array with a size $n + 1$ each time an element is appended, where $n$ is the previous size of the array, and to then copy the content of the old array into the new one.
+However, this feature is not proposed by default by the underlying array: neither |Array| nor |MbArray| can be resized. Thus, a naive way to implement |append| is to re-instantiate the underlying array with a size $n + 1$ each time an element is appended, where $n$ is the previous size of the array, and to then copy the content of the old array into the new one.
 While it is simple to implement, it has major performance issues in case several |append| calls are done sequentially to a decently large |ArrayBuffer|.
 % example maybe ?
 
-Instead, the growth strategy commonly employed is to allocate an array of two times the size of the previous one, which ultimately produces less garbage while reducing considerably the number of full array copies that need to be done. Here is how the |append| method was implemented:
+Instead, the growth strategy commonly employed is to allocate an array of two times the size of the previous one, which ultimately produces less garbage while considerably reducing the number of full array copies that need to be done. Here is how the |append| method was implemented:
 
 \begin{lstlisting-nobreak}
 def append(elem: T) = {
@@ -83,7 +83,7 @@ def append(elem: T) = {
 In the code snipper above, |_size| represents the actual number of elements that the |ArrayBuffer| contains, and |_capacity| the maximum number of elements that the |ArrayBuffer| can contain before having to resize itself.
  %To this end, the |ArrayBuffer| needs to keep track of the real number of elements that it contains, because it does not correspond to the size of the underlying array anymore. 
  
-\textbf{Iterable}. Iterating over the entire collection is an operation that is recurrent in algorithms. These algorithms often want to make abstraction of the collection type that is used and only want to express their need to traverse it. |Iterable| is a common interface which can be implemented by every collection that support complete traversal. It requires its implementations to provide access to an |Iterator|, which will itself be used to iterate through the collection. This was implemented in a standard way:
+\textbf{Iterable}. Iterating over the entire collection is an operation that is recurrent in algorithms. These algorithms often want to make abstraction of the collection type that is used and only want to express their need to traverse it. |Iterable| is a common interface which is implemented by every collection that supports complete traversal. It requires its implementations to provide access to an |Iterator|, which will itself be used to iterate through the collection. To achieve this, the |ArrayBuffer| implements the |Iterable[T]| interface presented below:
 
 \begin{lstlisting-nobreak}
 trait Iterable[@miniboxed T] {
@@ -103,7 +103,9 @@ trait Iterator[@miniboxed T] {
 }
 \end{lstlisting-nobreak}
 
-\textbf{Buildable}. Occasionnally, algorithms also want to express their need to build a new collection based on an existing one. In the Scala Standard Library, this feature is exposed through the |CanBuildFrom| mechanism. The advantage of this method is that it can build a collection that is adapted to the context: mapping a |BitSet| over a function returning |Float|s will produce a |Set| and not a |BitSet| -- which is exactly what we want -- because the Scala compiler will not find any way to construct a |BitSet| with |Float| values. Here, I decided to simplify (but not too much) the design by proposing an interface which only allows building the same type of collection. That is, a |Collection[T]| can only build |Collection[U]|. Thanks to Scala's ability to abstract over type constructor, the interface could be implemented in a straightforward manner: 
+\textbf{Buildable}. Occasionnally, algorithms also want to express their need to build a new collection based on an existing one. In the Scala Standard Library, this feature is exposed through the |CanBuildFrom| mechanism. 
+%The advantage of this method is that it can build a collection that is adapted to the context: mapping a |BitSet| over a function returning |Float|s will produce a |Set| and not a |BitSet| -- which is exactly what we want -- because the Scala compiler will not find any way to construct a |BitSet| with |Float| values. 
+Here, I decided to simplify (but not too much) the design by proposing an interface which only allows building the same type of collection. That is, a |Collection[T]| can only build |Collection[U]|. Thanks to Scala's ability to abstract over type constructor, the interface could be implemented in a straightforward manner: 
 
 \begin{lstlisting-nobreak}
 trait Buildable[@miniboxed T, Container[_]] extends Iterable[T] {
@@ -137,7 +139,17 @@ trait Builder[@miniboxed T, Container[_]] {
 }
 \end{lstlisting-nobreak}
 
-Even though the simplification lost us a bit of flexibility, the abstraction over the collection is still present, thus avoiding us the cost of having to reimplemented |map| and |filter| for each of our collections.
+Concretely, the |Builder| implementation for the |ArrayBuffer| is done the following way:
+
+\begin{lstlisting-nobreak}
+class ArrayBufferBuilder[@miniboxed T] extends Builder[T, ArrayBuffer] {
+
+  var innerBuf: ArrayBuffer[T] = new ArrayBuffer[T](0)
+
+  override def append(elem: T) = innerBuf.append(elem)
+  override def finalise = innerBuf
+}
+\end{lstlisting-nobreak}
 
 \subsection{Benchmarking procedure}
 
@@ -156,23 +168,25 @@ object MbVectorBenchmark extends PerformanceTest.Quickbenchmark {
     Aggregator.average,
     measurer)
 
-  val vectors = for {
+  val bufs = for {
     size <- sizes
-  } yield new MbVector[Int](size)
+  } yield new ArrayBuffer[Int](size)
 
-  performance of "MbVector" in {
+  performance of "ArrayBuffer" in {
     measure method "map" in {
-      using(vectors) setUp {
-        v => 
-          v.map(_ + 1)
-          v.map(_ + 2)
+      using(bufs) setUp {
+        b => 
+          b.map(_ + 1)
+          b.map(_ + 2)
       } in {
-        v => v.map(_ + 1).map(_ + 2).map(_ + 3)
+        b => b.map(_ + 1).map(_ + 2).map(_ + 3)
       }
     }
   }
 }
 \end{lstlisting-nobreak}
+
+The program will bench 5 different |ArrayBuffer| configurations corresponding to 5 different sizes of |ArrayBuffer|s from 300'000 to 1'500'000 elements. For each configuration, |ScalaMeter| performs multiple runs of the code being benchmarked and yields -- in our case -- the average of each run. It is worth noting that before each run, the |ScalaMeter| benchmarking procedure runs the code multiple times in order to make sure the JVM has as little noise as possible and that the JIT has compiled the methods.
 
 \subsection{The Numbers}
 
